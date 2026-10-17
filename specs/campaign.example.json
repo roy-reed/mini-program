@@ -1,0 +1,268 @@
+{
+  "schemaVersion": "1.0",
+  "exampleOnly": true,
+  "notes": [
+    "占位配置，不是生产数据或已审核素材。",
+    "发布前必须补齐日期、真实对象、素材使用期限和审核记录。",
+    "配置内 symbolic id 在入库时映射为数据库 UUID。"
+  ],
+  "campaign": {
+    "id": "campaign-demo",
+    "slug": "album-invitation-demo",
+    "title": "新专辑邀请函",
+    "artistName": "待填写乐队名称",
+    "albumName": "待填写专辑名称",
+    "status": "draft",
+    "startsAt": null,
+    "endsAt": null,
+    "rightsUntil": null,
+    "timezone": "Asia/Shanghai"
+  },
+  "rules": {
+    "drawsPerUserPerCampaign": 1,
+    "allowReroll": false,
+    "paid": false,
+    "retainDaysAfterEnd": 90,
+    "shareTtlDays": 30,
+    "shareMediaTtlSeconds": 300,
+    "nameMaxGraphemes": 16,
+    "allowEmoji": false,
+    "nameChangesPerDay": 3,
+    "nameRendersPerCampaignPerDay": 2,
+    "nameUpdatePolicy": "explicit_regenerate_same_variant",
+    "maxAutomaticAttempts": 3
+  },
+  "output": {
+    "container": "mp4",
+    "width": 720,
+    "height": 1280,
+    "fps": 30,
+    "videoCodec": "h264",
+    "pixelFormat": "yuv420p",
+    "targetVideoBitrateKbps": 2000,
+    "audioCodec": "aac",
+    "audioBitrateKbps": 128,
+    "minDurationSeconds": 15,
+    "maxDurationSeconds": 30
+  },
+  "layouts": [
+    {
+      "id": "invitation-default-v1",
+      "fontObjectKey": "PLACEHOLDER/fonts/authorized-font.otf",
+      "fontLicenseVerified": false,
+      "headline": "诚邀 {displayName} 收听",
+      "subheadline": "{artistName} 全新专辑《{albumName}》",
+      "nameBox": {
+        "x": 60,
+        "y": 480,
+        "width": 600,
+        "height": 180,
+        "fontSize": 48,
+        "minFontSize": 30,
+        "maxLines": 2
+      },
+      "approvalStatus": "pending"
+    }
+  ],
+  "audioClips": [
+    {
+      "id": "clip-01",
+      "title": "示例曲目 1",
+      "objectKey": "PLACEHOLDER/audio/clip-01.wav",
+      "durationSeconds": 20,
+      "rightsUntil": null,
+      "approvalStatus": "pending"
+    },
+    {
+      "id": "clip-02",
+      "title": "示例曲目 2",
+      "objectKey": "PLACEHOLDER/audio/clip-02.wav",
+      "durationSeconds": 20,
+      "rightsUntil": null,
+      "approvalStatus": "pending"
+    },
+    {
+      "id": "clip-03",
+      "title": "示例曲目 3",
+      "objectKey": "PLACEHOLDER/audio/clip-03.wav",
+      "durationSeconds": 20,
+      "rightsUntil": null,
+      "approvalStatus": "pending"
+    }
+  ],
+  "backgrounds": [
+    {
+      "id": "background-01",
+      "label": "夜色",
+      "objectKey": "PLACEHOLDER/backgrounds/background-01.png",
+      "kind": "image",
+      "rightsUntil": null,
+      "approvalStatus": "pending"
+    },
+    {
+      "id": "background-02",
+      "label": "海边",
+      "objectKey": "PLACEHOLDER/backgrounds/background-02.png",
+      "kind": "image",
+      "rightsUntil": null,
+      "approvalStatus": "pending"
+    },
+    {
+      "id": "background-03",
+      "label": "舞台",
+      "objectKey": "PLACEHOLDER/backgrounds/background-03.png",
+      "kind": "image",
+      "rightsUntil": null,
+      "approvalStatus": "pending"
+    },
+    {
+      "id": "background-04",
+      "label": "手写信",
+      "objectKey": "PLACEHOLDER/backgrounds/background-04.png",
+      "kind": "image",
+      "rightsUntil": null,
+      "approvalStatus": "pending"
+    }
+  ],
+  "variants": [
+    {
+      "id": "variant-01-01",
+      "label": "曲目 1 × 夜色",
+      "audioId": "clip-01",
+      "backgroundId": "background-01",
+      "layoutId": "invitation-default-v1",
+      "weight": 1,
+      "baseVideoObjectKey": "PLACEHOLDER/masters/variant-01-01.mp4",
+      "approvalStatus": "pending"
+    },
+    {
+      "id": "variant-01-02",
+      "label": "曲目 1 × 海边",
+      "audioId": "clip-01",
+      "backgroundId": "background-02",
+      "layoutId": "invitation-default-v1",
+      "weight": 1,
+      "baseVideoObjectKey": "PLACEHOLDER/masters/variant-01-02.mp4",
+      "approvalStatus": "pending"
+    },
+    {
+      "id": "variant-01-03",
+      "label": "曲目 1 × 舞台",
+      "audioId": "clip-01",
+      "backgroundId": "background-03",
+      "layoutId": "invitation-default-v1",
+      "weight": 1,
+      "baseVideoObjectKey": "PLACEHOLDER/masters/variant-01-03.mp4",
+      "approvalStatus": "pending"
+    },
+    {
+      "id": "variant-01-04",
+      "label": "曲目 1 × 手写信",
+      "audioId": "clip-01",
+      "backgroundId": "background-04",
+      "layoutId": "invitation-default-v1",
+      "weight": 1,
+      "baseVideoObjectKey": "PLACEHOLDER/masters/variant-01-04.mp4",
+      "approvalStatus": "pending"
+    },
+    {
+      "id": "variant-02-01",
+      "label": "曲目 2 × 夜色",
+      "audioId": "clip-02",
+      "backgroundId": "background-01",
+      "layoutId": "invitation-default-v1",
+      "weight": 1,
+      "baseVideoObjectKey": "PLACEHOLDER/masters/variant-02-01.mp4",
+      "approvalStatus": "pending"
+    },
+    {
+      "id": "variant-02-02",
+      "label": "曲目 2 × 海边",
+      "audioId": "clip-02",
+      "backgroundId": "background-02",
+      "layoutId": "invitation-default-v1",
+      "weight": 1,
+      "baseVideoObjectKey": "PLACEHOLDER/masters/variant-02-02.mp4",
+      "approvalStatus": "pending"
+    },
+    {
+      "id": "variant-02-03",
+      "label": "曲目 2 × 舞台",
+      "audioId": "clip-02",
+      "backgroundId": "background-03",
+      "layoutId": "invitation-default-v1",
+      "weight": 1,
+      "baseVideoObjectKey": "PLACEHOLDER/masters/variant-02-03.mp4",
+      "approvalStatus": "pending"
+    },
+    {
+      "id": "variant-02-04",
+      "label": "曲目 2 × 手写信",
+      "audioId": "clip-02",
+      "backgroundId": "background-04",
+      "layoutId": "invitation-default-v1",
+      "weight": 1,
+      "baseVideoObjectKey": "PLACEHOLDER/masters/variant-02-04.mp4",
+      "approvalStatus": "pending"
+    },
+    {
+      "id": "variant-03-01",
+      "label": "曲目 3 × 夜色",
+      "audioId": "clip-03",
+      "backgroundId": "background-01",
+      "layoutId": "invitation-default-v1",
+      "weight": 1,
+      "baseVideoObjectKey": "PLACEHOLDER/masters/variant-03-01.mp4",
+      "approvalStatus": "pending"
+    },
+    {
+      "id": "variant-03-02",
+      "label": "曲目 3 × 海边",
+      "audioId": "clip-03",
+      "backgroundId": "background-02",
+      "layoutId": "invitation-default-v1",
+      "weight": 1,
+      "baseVideoObjectKey": "PLACEHOLDER/masters/variant-03-02.mp4",
+      "approvalStatus": "pending"
+    },
+    {
+      "id": "variant-03-03",
+      "label": "曲目 3 × 舞台",
+      "audioId": "clip-03",
+      "backgroundId": "background-03",
+      "layoutId": "invitation-default-v1",
+      "weight": 1,
+      "baseVideoObjectKey": "PLACEHOLDER/masters/variant-03-03.mp4",
+      "approvalStatus": "pending"
+    },
+    {
+      "id": "variant-03-04",
+      "label": "曲目 3 × 手写信",
+      "audioId": "clip-03",
+      "backgroundId": "background-04",
+      "layoutId": "invitation-default-v1",
+      "weight": 1,
+      "baseVideoObjectKey": "PLACEHOLDER/masters/variant-03-04.mp4",
+      "approvalStatus": "pending"
+    }
+  ],
+  "listenDestination": {
+    "type": "search_hint",
+    "platformName": "待确认音乐平台",
+    "query": "待填写乐队名称 待填写专辑名称",
+    "verified": false
+  },
+  "publication": {
+    "ready": false,
+    "requiredChecks": [
+      "dates_and_retention",
+      "rights_and_font_license",
+      "real_asset_objects",
+      "all_base_videos_prepared",
+      "all_variants_approved",
+      "long_name_preview",
+      "real_device_play_save_share",
+      "listen_destination"
+    ]
+  }
+}
