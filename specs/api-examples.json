@@ -1,0 +1,102 @@
+{
+  "schemaVersion": "1.0",
+  "examples": [
+    {
+      "schema": "LoginInput",
+      "value": {
+        "code": "example-code-not-a-live-credential",
+        "privacyNoticeVersion": "v1",
+        "consentAction": "user_agreed"
+      }
+    },
+    {
+      "schema": "NameInput",
+      "value": {
+        "displayName": "小林",
+        "expectedNameVersion": 0
+      }
+    },
+    {
+      "schema": "Invitation",
+      "value": {
+        "invitationId": "33333333-3333-4333-8333-333333333333",
+        "campaignId": "22222222-2222-4222-8222-222222222222",
+        "variant": {
+          "id": "44444444-4444-4444-8444-444444444444",
+          "label": "夜色来信"
+        },
+        "status": "active",
+        "currentRevision": null,
+        "pendingRevision": {
+          "id": "55555555-5555-4555-8555-555555555555",
+          "revisionNo": 1,
+          "nameSnapshot": "小林",
+          "nameVersion": 1,
+          "status": "queued",
+          "stage": "queued",
+          "mediaExpiresAt": null,
+          "durationSeconds": null,
+          "lastErrorCode": null
+        },
+        "capabilities": {
+          "canSave": false,
+          "canShare": false,
+          "canRename": false,
+          "canRetry": false,
+          "canCancelPending": false
+        },
+        "pollAfterMs": 2000,
+        "requestId": "request-example"
+      }
+    },
+    {
+      "schema": "Invitation",
+      "value": {
+        "invitationId": "33333333-3333-4333-8333-333333333333",
+        "campaignId": "22222222-2222-4222-8222-222222222222",
+        "variant": {
+          "id": "44444444-4444-4444-8444-444444444444",
+          "label": "夜色来信"
+        },
+        "status": "active",
+        "currentRevision": {
+          "id": "55555555-5555-4555-8555-555555555555",
+          "revisionNo": 1,
+          "nameSnapshot": "小林",
+          "nameVersion": 1,
+          "status": "ready",
+          "stage": "complete",
+          "mediaExpiresAt": "2027-01-15T12:00:00+08:00",
+          "durationSeconds": 20,
+          "lastErrorCode": null
+        },
+        "capabilities": {
+          "canSave": true,
+          "canShare": true,
+          "canRename": true,
+          "canRetry": false,
+          "canCancelPending": false
+        },
+        "pollAfterMs": 0,
+        "requestId": "request-example",
+        "pendingRevision": null
+      }
+    },
+    {
+      "schema": "Error",
+      "value": {
+        "code": "REVISION_IN_PROGRESS",
+        "message": "已有制作中的版本",
+        "requestId": "request-example"
+      }
+    },
+    {
+      "schema": "ShareCreated",
+      "value": {
+        "sharePath": "/pages/share/index?t=example-opaque-token",
+        "expiresAt": "2026-11-16T12:00:00+08:00",
+        "requestId": "request-example"
+      }
+    }
+  ]
+}
