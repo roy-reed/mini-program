@@ -1,0 +1,18 @@
+{
+  "reviewDate": "2026-10-18",
+  "repoBase": "45ddd015e775575333d8f4d31b0c21d70c04abca",
+  "attachments": [
+    {
+      "fileName": "专辑来信-完整实施方案.md",
+      "bytes": 439490,
+      "sha256": "3c68309dae5d15cccecb2a7fb2064b0a07e4612237146a2e5c69a828ed841fc3",
+      "role": "user_supplied_reference_not_executed"
+    },
+    {
+      "fileName": "album-letter-plan.zip",
+      "bytes": 451453,
+      "sha256": "f5f262be6e3a1e383a9363f0e7a0b7cbf5e0fc6199612cfaacc7d7d9e4ff2fca",
+      "role": "user_supplied_reference_not_executed"
+    }
+  ]
+}

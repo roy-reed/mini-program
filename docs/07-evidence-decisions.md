@@ -1,6 +1,6 @@
 # 需求依据、官方来源与决策记录
 
-核查日期：2026-10-17。本文区分用户明确需求、方案建议与需要实际环境验证的内容，避免把假设写成已确定条件。
+核查日期：2026-10-18（保留初版历史）。本文区分用户明确需求、方案建议与需要实际环境验证的内容，避免把假设写成已确定条件。
 
 ## 1. 用户已明确的需求
 
@@ -12,7 +12,7 @@
 | 上传流程图 | 是否填过称呼分流、项目选择、专题邀请函、是否已生成分流、我的改名 |
 | 指定交付位置 | GitHub 仓库 `roy-reed/mini-program` |
 
-首次读取仓库时，默认分支为 `main`，提交为 `2d8e706cc14a0c45734a1e2b2a2479efaa764c5e`，只有 README 与 LICENSE。提交方案前发现新提交 `ed813f9b891f75b33372b2fd7ac44b2402d8f30a` 增加了 [小程序功能流程图.drawio](../小程序功能流程图.drawio)；已读取其中节点并核对与截图一致，本方案基于这个新提交保留该文件。当前仍没有小程序代码或仓库内 AGENTS.md。原始截图完整保存在 [original-flow.png](assets/original-flow.png)。
+首次读取仓库时，默认分支为 `main`，提交为 `2d8e706cc14a0c45734a1e2b2a2479efaa764c5e`，只有 README 与 LICENSE。提交方案前发现新提交 `ed813f9b891f75b33372b2fd7ac44b2402d8f30a` 增加了 [小程序功能流程图.drawio](../小程序功能流程图.drawio)；已读取其中节点并核对与截图一致，本方案基于这个新提交保留该文件。以上为初版历史；v1.2已增加AGENTS与实施手册，仍没有应用源码。原始截图完整保存在 [original-flow.png](assets/original-flow.png)。
 
 ## 2. 本方案采用的默认值
 
@@ -43,9 +43,23 @@
 | S6 | [CloudBase HTTP 网关概述](https://docs.cloudbase.net/service/introduce) | 若改用云开发，默认域名与生产自定义域名的限制需核实；本方案不依赖测试域名上线 |
 | S7 | [CloudBase 云托管概念说明](https://docs.cloudbase.net/run/related) | 云托管私网、备案与镜像仓库的产品边界；仅作为替代部署参考 |
 
-这些页面于核查时成功获取正文。无需逐字复制官方示例即可实施；涉及第三方组件许可证和实际使用范围由项目方在工程依赖与素材台账中记录。
+S1–S7为初版查阅记录；本次新核查及范围见下表。无需逐字复制官方示例即可实施；涉及第三方组件许可证和实际使用范围由项目方在工程依赖与素材台账中记录。
 
-## 4. 微信官方入口：本次正文读取失败，必须联调核实
+## 3.1 本轮核查与采用边界（2026-10-18）
+
+| 来源 | 本轮确认的范围 | 不能据此声称 |
+| --- | --- | --- |
+| [微信官方API类型定义](https://raw.githubusercontent.com/wechat-miniprogram/api-typings/master/types/wx/lib.wx.api.d.ts) | 相册保存接受本地MP4；隐私授权辅助接口与官方同意按钮/resolve机制 | 不写代码就必然出现某种弹窗；已经通过本账号真机测试 |
+| [工信部备案通知](https://www.miit.gov.cn/jgsj/xgj/wjfb/art/2023/art_dd783a581c9644a4aee10afa582811db.html) | 备案流程属于上线条件核实范围 | 项目一定适用某类目、无额外资质、固定期限过审 |
+| [Docker Compose变量规则](https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/) | CLI插值与容器环境须分清，支持显式--env-file | 附件脚本在任意工作目录必然成功 |
+| [OWASP CSRF](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html) | CSRF与会话绑定，HMAC/Origin等设计参考 | 本项目身份实现已经安全审计通过 |
+| [Node发布状态](https://nodejs.org/en/about/previous-releases) | Node22仍处于维护范围；本项目继续固定22主版本 | 不升级就永久受支持或补丁无需检查 |
+| [canvas官方仓库](https://github.com/Brooooooklyn/canvas) / [FFmpeg滤镜](https://ffmpeg.org/ffmpeg-filters.html) | 文字PNG与overlay实现路径 | 某模板耗时、中文字库覆盖或手机兼容已经实测 |
+| [PostgreSQL行锁](https://www.postgresql.org/docs/current/explicit-locking.html) | 行锁与并发控制原则 | 简化SQL天然满足删除/租约/跨表一致性 |
+
+上述是能力依据；具体阈值、模型分工、SQL锁序、任务拆分和部署流程是本项目设计。原生开发站部分正文仍无法直接读取，账号类目/认证/隐私声明与实际发布能力需H01/H02/H06实证。附件里的固定审核期限、默认类目和无前置审批未被当作事实采纳。
+
+## 4. 微信开发站部分页面不可读，必须联调核实
 
 本次尝试访问微信开发者站点，网页读取工具返回不可读取错误。下列链接是待核对入口，不标记为“本次已验证”。不能根据本文件声称已在真实 AppID 或所有微信客户端完成验证。
 
@@ -58,7 +72,7 @@
 | [网络能力](https://developers.weixin.qq.com/miniprogram/dev/framework/ability/network.html) | request、downloadFile 与播放域名、HTTPS、重定向和证书要求 |
 | [微信公众平台](https://mp.weixin.qq.com/) | 本项目主体、可选类目、认证／备案、提审及外部平台入口的真实配置 |
 
-M0 的真机验证是前置里程碑：至少拿到一个真实微信 AppID，以项目实际媒体走完登录、内容检查、播放、相册保存和卡片分享。不能只靠开发者工具里“跳过域名校验”验证。
+M0/G1先验证真实AppID、中文媒体、播放/保存和卡片分享；真实登录与内容检查在S10/S12完成并在G2/G3验收。不能只靠开发者工具里“跳过域名校验”验证。
 
 ## 5. 仍需项目方提供的五组输入
 

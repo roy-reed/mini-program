@@ -1,0 +1,5464 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "专辑邀请函微信小程序 API",
+    "version": "1.2.0",
+    "description": "v1.2融合实施契约，尚无运行服务。响应直接返回对象，不套data。目录与状态仅使用本仓库定义；首版无web-view。所有管理API同源Cookie+Origin/CSRF+角色鉴权。"
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "security": [
+    {
+      "userBearer": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "user"
+    },
+    {
+      "name": "public"
+    },
+    {
+      "name": "admin"
+    }
+  ],
+  "paths": {
+    "/auth/wechat": {
+      "post": {
+        "operationId": "createSession",
+        "summary": "微信code换取业务会话",
+        "tags": [
+          "public"
+        ],
+        "description": "每次使用新code。保存业务同意动作不替代微信平台隐私授权；生产不可使用mock。",
+        "responses": {
+          "201": {
+            "description": "已创建",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me": {
+      "get": {
+        "operationId": "getMe",
+        "summary": "当前用户",
+        "tags": [
+          "user"
+        ],
+        "description": "当前用户",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateName",
+        "summary": "修改默认称呼",
+        "tags": [
+          "user"
+        ],
+        "description": "修改默认称呼",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameInput"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteAccount",
+        "summary": "删除账号并启动清理",
+        "tags": [
+          "user"
+        ],
+        "description": "删除账号并启动清理",
+        "responses": {
+          "202": {
+            "description": "已接受，后台处理中",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Accepted"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/campaigns": {
+      "get": {
+        "operationId": "listCampaigns",
+        "summary": "活动列表",
+        "tags": [
+          "user"
+        ],
+        "description": "活动列表",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignList"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ]
+      }
+    },
+    "/campaigns/{id}": {
+      "get": {
+        "operationId": "getCampaign",
+        "summary": "本人活动信息与抽取资格",
+        "tags": [
+          "user"
+        ],
+        "description": "本人活动信息与抽取资格",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignPersonal"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/public/campaigns": {
+      "get": {
+        "operationId": "listPublicCampaigns",
+        "summary": "匿名可见活动列表",
+        "tags": [
+          "public"
+        ],
+        "description": "匿名可见活动列表",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignList"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ]
+      }
+    },
+    "/public/campaigns/{id}": {
+      "get": {
+        "operationId": "getPublicCampaign",
+        "summary": "匿名活动详情",
+        "tags": [
+          "public"
+        ],
+        "description": "匿名活动详情",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignPublic"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/campaigns/{id}/draw": {
+      "post": {
+        "operationId": "drawInvitation",
+        "summary": "原子创建一次抽取",
+        "tags": [
+          "user"
+        ],
+        "description": "原子创建一次抽取",
+        "responses": {
+          "202": {
+            "description": "已接受，后台处理中",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invitation"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invitation"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameVersionInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/invitations": {
+      "get": {
+        "operationId": "listMyInvitations",
+        "summary": "本人作品列表",
+        "tags": [
+          "user"
+        ],
+        "description": "本人作品列表",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationList"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ]
+      }
+    },
+    "/invitations/{id}": {
+      "get": {
+        "operationId": "getInvitation",
+        "summary": "查询本人邀请函与生成状态",
+        "tags": [
+          "user"
+        ],
+        "description": "查询本人邀请函与生成状态",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invitation"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "deleteInvitation",
+        "summary": "删除作品内容并保留最小抽取占位",
+        "tags": [
+          "user"
+        ],
+        "description": "删除作品内容并保留最小抽取占位",
+        "responses": {
+          "202": {
+            "description": "已接受，后台处理中",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Accepted"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invitations/{id}/revisions": {
+      "post": {
+        "operationId": "createNameRevision",
+        "summary": "以当前称呼更新原款邀请函",
+        "tags": [
+          "user"
+        ],
+        "description": "以当前称呼更新原款邀请函",
+        "responses": {
+          "202": {
+            "description": "已接受，后台处理中",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invitation"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invitation"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameVersionInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invitations/{id}/pending-revision": {
+      "delete": {
+        "operationId": "cancelFailedPending",
+        "summary": "取消失败的改名版本",
+        "tags": [
+          "user"
+        ],
+        "description": "仅已有current且pending为failed/cancelled时可取消，不取消首次抽取、不恢复抽取额度。处理中返回409。",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invitation"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelPendingInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invitations/{id}/retry": {
+      "post": {
+        "operationId": "retryInvitation",
+        "summary": "唤醒可恢复任务或重建过期文件",
+        "tags": [
+          "user"
+        ],
+        "description": "唤醒可恢复任务或重建过期文件",
+        "responses": {
+          "202": {
+            "description": "已接受，后台处理中",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invitation"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invitation"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetryInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invitations/{id}/media": {
+      "get": {
+        "operationId": "getMedia",
+        "summary": "获取当前ready版本短期媒体地址",
+        "tags": [
+          "user"
+        ],
+        "description": "获取当前ready版本短期媒体地址",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Media"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "revisionId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "playback",
+                "download"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/invitations/{id}/share": {
+      "post": {
+        "operationId": "createShare",
+        "summary": "明确开启当前版本分享",
+        "tags": [
+          "user"
+        ],
+        "description": "同键重放返回同一链接；被关闭的旧创建键不得复活链接，返回SHARE_REVOKED。",
+        "responses": {
+          "201": {
+            "description": "已创建",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareCreated"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareCreated"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareInput"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "revokeShares",
+        "summary": "关闭邀请函全部分享",
+        "tags": [
+          "user"
+        ],
+        "description": "关闭邀请函全部分享",
+        "responses": {
+          "204": {
+            "description": "成功，无响应体"
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          }
+        ]
+      }
+    },
+    "/shares/{token}": {
+      "get": {
+        "operationId": "getSharedInvitation",
+        "summary": "使用分享令牌只读访问",
+        "tags": [
+          "public"
+        ],
+        "description": "使用分享令牌只读访问",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareView"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 20,
+              "maxLength": 256
+            }
+          }
+        ]
+      }
+    },
+    "/events": {
+      "post": {
+        "operationId": "ingestEvents",
+        "summary": "接收去敏客户端事件",
+        "tags": [
+          "user"
+        ],
+        "description": "接收去敏客户端事件",
+        "responses": {
+          "202": {
+            "description": "已接受，后台处理中",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Accepted"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventsInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/auth/session": {
+      "post": {
+        "operationId": "adminLogin",
+        "summary": "管理员密码与TOTP登录",
+        "tags": [
+          "admin"
+        ],
+        "description": "用户名、密码、TOTP；检查精确Origin和JSON、限流。成功创建新随机会话，Cookie HttpOnly/Secure/SameSite=Lax/Path=/api/v1/admin；独立CSRF密钥派生令牌。",
+        "responses": {
+          "201": {
+            "description": "已创建",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSession"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              },
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "invite_admin；Path=/api/v1/admin；HttpOnly；Secure；SameSite=Lax"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminLoginInput"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "adminSession",
+        "summary": "读取管理员会话与CSRF令牌",
+        "tags": [
+          "admin"
+        ],
+        "description": "同源读取会话；csrfToken以独立密钥、csrf_key_version与随机session.id做HMAC派生，可重建而非从哈希还原；响应no-store。",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSession"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "adminLogout",
+        "summary": "退出管理员会话",
+        "tags": [
+          "admin"
+        ],
+        "description": "退出管理员会话",
+        "responses": {
+          "204": {
+            "description": "成功，无响应体"
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/csrf"
+          }
+        ]
+      }
+    },
+    "/admin/campaigns": {
+      "get": {
+        "operationId": "adminListCampaigns",
+        "summary": "后台活动列表",
+        "tags": [
+          "admin"
+        ],
+        "description": "后台活动列表",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCampaignList"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "adminCreateCampaign",
+        "summary": "创建活动草稿",
+        "tags": [
+          "admin"
+        ],
+        "description": "创建活动草稿",
+        "responses": {
+          "201": {
+            "description": "已创建",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignAdmin"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/idempotency"
+          },
+          {
+            "$ref": "#/components/parameters/csrf"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CampaignDraftInput"
+              }
+            }
+          }
+        },
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/campaigns/{id}": {
+      "get": {
+        "operationId": "adminGetCampaign",
+        "summary": "后台活动详情",
+        "tags": [
+          "admin"
+        ],
+        "description": "后台活动详情",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignAdmin"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
+      },
+      "patch": {
+        "operationId": "adminUpdateCampaign",
+        "summary": "版本保护的活动更新",
+        "tags": [
+          "admin"
+        ],
+        "description": "版本保护的活动更新",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignAdmin"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          },
+          {
+            "$ref": "#/components/parameters/csrf"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CampaignPatchInput"
+              }
+            }
+          }
+        },
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/assets/upload-ticket": {
+      "post": {
+        "operationId": "adminUploadTicket",
+        "summary": "创建受限素材上传票据",
+        "tags": [
+          "admin"
+        ],
+        "description": "创建受限素材上传票据",
+        "responses": {
+          "201": {
+            "description": "已创建",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadTicket"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/idempotency"
+          },
+          {
+            "$ref": "#/components/parameters/csrf"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadInput"
+              }
+            }
+          }
+        },
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/assets/{id}/complete": {
+      "post": {
+        "operationId": "adminCompleteAsset",
+        "summary": "提交上传完成并启动媒体检查",
+        "tags": [
+          "admin"
+        ],
+        "description": "校验对象上传事实后入持久asset_check_jobs，返回202 Asset。不得在HTTP内等待ffprobe或在事务内下载媒体。",
+        "responses": {
+          "202": {
+            "description": "已接受，后台处理中",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Asset"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          },
+          {
+            "$ref": "#/components/parameters/csrf"
+          }
+        ],
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/assets/{id}": {
+      "get": {
+        "operationId": "adminGetAsset",
+        "summary": "读取素材检查状态",
+        "tags": [
+          "admin"
+        ],
+        "description": "读取素材检查状态",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Asset"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/assets/{id}/approve": {
+      "post": {
+        "operationId": "adminApproveAsset",
+        "summary": "确认素材使用范围",
+        "tags": [
+          "admin"
+        ],
+        "description": "确认素材使用范围",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Asset"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          },
+          {
+            "$ref": "#/components/parameters/csrf"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveAssetInput"
+              }
+            }
+          }
+        },
+        "x-required-roles-any": [
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/assets/{id}/withdraw": {
+      "post": {
+        "operationId": "adminWithdrawAsset",
+        "summary": "撤回素材并封禁受影响作品",
+        "tags": [
+          "admin"
+        ],
+        "description": "撤回素材并封禁受影响作品",
+        "responses": {
+          "202": {
+            "description": "已接受，后台处理中",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Accepted"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          },
+          {
+            "$ref": "#/components/parameters/csrf"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WithdrawalInput"
+              }
+            }
+          }
+        },
+        "x-required-roles-any": [
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/campaigns/{id}/variants": {
+      "post": {
+        "operationId": "adminCreateVariant",
+        "summary": "创建不可变款式版本",
+        "tags": [
+          "admin"
+        ],
+        "description": "创建不可变款式版本",
+        "responses": {
+          "201": {
+            "description": "已创建",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariantAdmin"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          },
+          {
+            "$ref": "#/components/parameters/csrf"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VariantInput"
+              }
+            }
+          }
+        },
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
+      },
+      "get": {
+        "operationId": "adminListVariants",
+        "summary": "查询活动的不可变款式列表",
+        "tags": [
+          "admin"
+        ],
+        "description": "查询活动的不可变款式列表",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariantList"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/variants/{id}": {
+      "get": {
+        "operationId": "adminGetVariant",
+        "summary": "查询款式与母版状态",
+        "tags": [
+          "admin"
+        ],
+        "description": "查询款式与母版状态",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariantAdmin"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/variants/{id}/prepare": {
+      "post": {
+        "operationId": "adminPrepareVariant",
+        "summary": "预制款式母版",
+        "tags": [
+          "admin"
+        ],
+        "description": "同一configHash只建一项持久prepare任务，生成母版和short/long/latin三种固定测试名字预览。重放返回同任务；生产用户渲染仍走render_jobs。",
+        "responses": {
+          "202": {
+            "description": "已接受，后台处理中",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          },
+          {
+            "$ref": "#/components/parameters/csrf"
+          }
+        ],
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/variants/{id}/approve": {
+      "post": {
+        "operationId": "adminApproveVariant",
+        "summary": "确认母版与排版预览",
+        "tags": [
+          "admin"
+        ],
+        "description": "确认母版与排版预览",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariantAdmin"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          },
+          {
+            "$ref": "#/components/parameters/csrf"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VariantApprovalInput"
+              }
+            }
+          }
+        },
+        "x-required-roles-any": [
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/campaigns/{id}/publish": {
+      "post": {
+        "operationId": "adminPublishCampaign",
+        "summary": "验证并发布不可变配置快照",
+        "tags": [
+          "admin"
+        ],
+        "description": "验证并发布不可变配置快照",
+        "responses": {
+          "201": {
+            "description": "已创建",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishResult"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          },
+          {
+            "$ref": "#/components/parameters/csrf"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishInput"
+              }
+            }
+          }
+        },
+        "x-required-roles-any": [
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/campaigns/{id}/pause": {
+      "post": {
+        "operationId": "adminPauseCampaign",
+        "summary": "暂停新增生成",
+        "tags": [
+          "admin"
+        ],
+        "description": "暂停新增生成",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignAdmin"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          },
+          {
+            "$ref": "#/components/parameters/csrf"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminActionInput"
+              }
+            }
+          }
+        },
+        "x-required-roles-any": [
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/campaigns/{id}/resume": {
+      "post": {
+        "operationId": "adminResumeCampaign",
+        "summary": "恢复有效期内活动",
+        "tags": [
+          "admin"
+        ],
+        "description": "恢复有效期内活动",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignAdmin"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          },
+          {
+            "$ref": "#/components/parameters/csrf"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminActionInput"
+              }
+            }
+          }
+        },
+        "x-required-roles-any": [
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/campaigns/{id}/withdraw": {
+      "post": {
+        "operationId": "adminWithdrawCampaign",
+        "summary": "下架活动与撤回访问",
+        "tags": [
+          "admin"
+        ],
+        "description": "下架活动与撤回访问",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignAdmin"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          },
+          {
+            "$ref": "#/components/parameters/csrf"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminActionInput"
+              }
+            }
+          }
+        },
+        "x-required-roles-any": [
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/jobs": {
+      "get": {
+        "operationId": "adminListJobs",
+        "summary": "查看渲染和母版预制任务",
+        "tags": [
+          "admin"
+        ],
+        "description": "查看渲染和母版预制任务",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobList"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "render",
+                "prepare",
+                "asset_check"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/JobStatus"
+            }
+          }
+        ],
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/jobs/{id}/retry": {
+      "post": {
+        "operationId": "adminRetryJob",
+        "summary": "排障后授权新执行周期",
+        "tags": [
+          "admin"
+        ],
+        "description": "排障后授权新执行周期",
+        "responses": {
+          "202": {
+            "description": "已接受，后台处理中",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/idempotency"
+          },
+          {
+            "$ref": "#/components/parameters/csrf"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminRetryInput"
+              }
+            }
+          }
+        },
+        "x-required-roles-any": [
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/campaigns/{id}/metrics": {
+      "get": {
+        "operationId": "adminGetMetrics",
+        "summary": "按定义查询活动统计",
+        "tags": [
+          "admin"
+        ],
+        "description": "按定义查询活动统计",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Metrics"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/assets": {
+      "get": {
+        "operationId": "adminListAssets",
+        "summary": "分页查询可选择素材",
+        "tags": [
+          "admin"
+        ],
+        "description": "分页查询可选择素材",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetList"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "audio",
+                "background_image",
+                "background_video",
+                "font",
+                "cover"
+              ]
+            }
+          },
+          {
+            "name": "approvalStatus",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "rejected",
+                "withdrawn"
+              ]
+            }
+          }
+        ],
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/variants/{id}/preview": {
+      "get": {
+        "operationId": "adminGetVariantPreview",
+        "summary": "读取母版对应固定测试名字成片",
+        "tags": [
+          "admin"
+        ],
+        "description": "读取母版对应固定测试名字成片",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariantPreview"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "nameCase",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "short",
+                "long",
+                "latin"
+              ]
+            }
+          }
+        ],
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "userBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "业务随机会话令牌，不能提交OpenID充当身份。"
+      },
+      "adminCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "invite_admin",
+        "description": "独立管理员会话；写操作同时校验Origin和CSRF。"
+      }
+    },
+    "parameters": {
+      "idempotency": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "同一逻辑操作重试复用该值；同键不同请求体409。"
+      },
+      "csrf": {
+        "name": "X-CSRF-Token",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 32
+        },
+        "description": "管理员Cookie会话的写请求必须与会话CSRF值匹配，并验证Origin。"
+      },
+      "cursor": {
+        "name": "cursor",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      },
+      "limit": {
+        "name": "limit",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+          "default": 20
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]+$",
+            "enum": [
+              "INVALID_REQUEST",
+              "NAME_INVALID",
+              "NAME_REJECTED",
+              "SESSION_EXPIRED",
+              "AUTH_FAILED",
+              "ADMIN_FORBIDDEN",
+              "CSRF_FAILED",
+              "NOT_FOUND",
+              "NAME_VERSION_CONFLICT",
+              "REVISION_IN_PROGRESS",
+              "IDEMPOTENCY_CONFLICT",
+              "CONFIG_VERSION_CONFLICT",
+              "INVALID_STATE",
+              "MEDIA_NOT_READY",
+              "SHARE_REVOKED",
+              "CAMPAIGN_UNAVAILABLE",
+              "RIGHTS_EXPIRED",
+              "RATE_LIMITED",
+              "RETRY_EXHAUSTED",
+              "ASSET_NOT_READY",
+              "PREVIEW_NOT_APPROVED",
+              "PUBLICATION_BLOCKED",
+              "JOB_NOT_RETRYABLE",
+              "RENDER_CAPACITY_BUSY",
+              "MODERATION_UNAVAILABLE",
+              "WX_LOGIN_UNAVAILABLE",
+              "STORAGE_UNAVAILABLE",
+              "INTERNAL_ERROR"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "retryAfterSeconds": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "requestId"
+        ]
+      },
+      "User": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "description": "传输长度上限256码点；业务规则为NFC/trim后1–16个字素簇，禁控制字符和emoji，需审核和字体检查，不能用maxLength替代。"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nameVersion": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "nameVersion"
+        ]
+      },
+      "LoginInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "privacyNoticeVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "consentAction": {
+            "const": "user_agreed"
+          }
+        },
+        "required": [
+          "code",
+          "privacyNoticeVersion",
+          "consentAction"
+        ]
+      },
+      "Session": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "minLength": 32
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "accessToken",
+          "expiresAt",
+          "user",
+          "requestId"
+        ]
+      },
+      "NameInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "传输长度上限256码点；业务规则为NFC/trim后1–16个字素簇，禁控制字符和emoji，需审核和字体检查，不能用maxLength替代。"
+          },
+          "expectedNameVersion": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "displayName",
+          "expectedNameVersion"
+        ]
+      },
+      "NameVersionInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedNameVersion": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "expectedNameVersion"
+        ]
+      },
+      "Rules": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "drawsPerUserPerCampaign": {
+            "const": 1
+          },
+          "allowReroll": {
+            "const": false
+          },
+          "paid": {
+            "const": false
+          },
+          "retainDaysAfterEnd": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 365
+          },
+          "shareTtlDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 90
+          },
+          "shareMediaTtlSeconds": {
+            "type": "integer",
+            "minimum": 30,
+            "maximum": 300
+          },
+          "nameMaxGraphemes": {
+            "const": 16
+          },
+          "allowEmoji": {
+            "const": false
+          },
+          "nameChangesPerDay": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10
+          },
+          "nameRendersPerCampaignPerDay": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "nameUpdatePolicy": {
+            "const": "explicit_regenerate_same_variant"
+          },
+          "maxAutomaticAttempts": {
+            "const": 3
+          }
+        },
+        "required": [
+          "drawsPerUserPerCampaign",
+          "allowReroll",
+          "paid",
+          "retainDaysAfterEnd",
+          "shareTtlDays",
+          "shareMediaTtlSeconds",
+          "nameMaxGraphemes",
+          "allowEmoji",
+          "nameChangesPerDay",
+          "nameRendersPerCampaignPerDay",
+          "nameUpdatePolicy",
+          "maxAutomaticAttempts"
+        ]
+      },
+      "CampaignStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "scheduled",
+          "live",
+          "paused",
+          "ended",
+          "withdrawn"
+        ]
+      },
+      "RevisionStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "processing",
+          "ready",
+          "failed",
+          "expired",
+          "cancelled"
+        ]
+      },
+      "JobStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "running",
+          "retry_wait",
+          "succeeded",
+          "failed",
+          "cancelled"
+        ]
+      },
+      "Stage": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "rendering",
+          "uploading",
+          "validating",
+          "complete"
+        ]
+      },
+      "VariantSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ]
+      },
+      "CampaignPublic": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "artistName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "albumName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "status": {
+            "$ref": "#/components/schemas/CampaignStatus"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "retainUntil": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "coverUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rules": {
+            "$ref": "#/components/schemas/Rules"
+          },
+          "listenDestination": {
+            "$ref": "#/components/schemas/ListenDestination"
+          },
+          "shareCoverUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishedVariant"
+            },
+            "minItems": 1,
+            "maxItems": 500
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "artistName",
+          "albumName",
+          "status",
+          "startsAt",
+          "endsAt",
+          "retainUntil",
+          "coverUrl",
+          "rules",
+          "listenDestination",
+          "shareCoverUrl",
+          "variants"
+        ]
+      },
+      "CampaignPersonal": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "campaign": {
+            "$ref": "#/components/schemas/CampaignPublic"
+          },
+          "myInvitationId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "canDraw": {
+            "type": "boolean"
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "campaign",
+          "myInvitationId",
+          "canDraw",
+          "requestId"
+        ]
+      },
+      "Revision": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "revisionNo": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "nameSnapshot": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "传输长度上限256码点；业务规则为NFC/trim后1–16个字素簇，禁控制字符和emoji，需审核和字体检查，不能用maxLength替代。"
+          },
+          "nameVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "$ref": "#/components/schemas/RevisionStatus"
+          },
+          "stage": {
+            "$ref": "#/components/schemas/Stage"
+          },
+          "mediaExpiresAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "durationSeconds": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastErrorCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "revisionNo",
+          "nameSnapshot",
+          "nameVersion",
+          "status",
+          "stage",
+          "mediaExpiresAt",
+          "durationSeconds",
+          "lastErrorCode"
+        ]
+      },
+      "Capabilities": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "canSave": {
+            "type": "boolean"
+          },
+          "canShare": {
+            "type": "boolean"
+          },
+          "canRename": {
+            "type": "boolean"
+          },
+          "canRetry": {
+            "type": "boolean"
+          },
+          "canCancelPending": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canSave",
+          "canShare",
+          "canRename",
+          "canRetry",
+          "canCancelPending"
+        ]
+      },
+      "Invitation": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "invitationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "campaignId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "variant": {
+            "$ref": "#/components/schemas/VariantSummary"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "blocked",
+              "deleting",
+              "deleted"
+            ]
+          },
+          "currentRevision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Revision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pendingRevision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Revision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/Capabilities"
+          },
+          "pollAfterMs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "invitationId",
+          "campaignId",
+          "variant",
+          "status",
+          "currentRevision",
+          "pendingRevision",
+          "capabilities",
+          "pollAfterMs",
+          "requestId"
+        ]
+      },
+      "InvitationSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "invitationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "campaignId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "campaignTitle": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "variantLabel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "currentStatus": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RevisionStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pendingStatus": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RevisionStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "invitationId",
+          "campaignId",
+          "campaignTitle",
+          "variantLabel",
+          "currentStatus",
+          "pendingStatus",
+          "createdAt"
+        ]
+      },
+      "Media": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "mimeType": {
+            "const": "video/mp4"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "revisionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "url",
+          "expiresAt",
+          "mimeType",
+          "bytes",
+          "revisionId",
+          "requestId"
+        ]
+      },
+      "ShareInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "revisionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "consent": {
+            "const": true
+          }
+        },
+        "required": [
+          "revisionId",
+          "consent"
+        ]
+      },
+      "ShareCreated": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sharePath": {
+            "type": "string",
+            "pattern": "^/pages/share/index\\?t="
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "sharePath",
+          "expiresAt",
+          "requestId"
+        ]
+      },
+      "ShareView": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "campaign": {
+            "$ref": "#/components/schemas/CampaignPublic"
+          },
+          "nameSnapshot": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "传输长度上限256码点；业务规则为NFC/trim后1–16个字素簇，禁控制字符和emoji，需审核和字体检查，不能用maxLength替代。"
+          },
+          "variantLabel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "videoUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "posterUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mediaExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "campaign",
+          "nameSnapshot",
+          "variantLabel",
+          "videoUrl",
+          "posterUrl",
+          "mediaExpiresAt",
+          "requestId"
+        ],
+        "description": "只读公开DTO。不得包含userId、OpenID、session、内部邀请函所有权字段。"
+      },
+      "RetryInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "revisionId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "revisionId"
+        ]
+      },
+      "CancelPendingInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "revisionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "confirm": {
+            "const": true
+          }
+        },
+        "required": [
+          "revisionId",
+          "confirm"
+        ]
+      },
+      "DeleteInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "confirm": {
+            "const": true
+          }
+        },
+        "required": [
+          "confirm"
+        ]
+      },
+      "Accepted": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "status",
+          "requestId"
+        ]
+      },
+      "Event": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "enum": [
+              "campaign_view",
+              "video_play",
+              "video_complete",
+              "save_success",
+              "save_failure",
+              "share_intent"
+            ]
+          },
+          "campaignId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "revisionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "errorCode": {
+            "type": "string",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "eventId",
+          "name",
+          "campaignId",
+          "occurredAt"
+        ]
+      },
+      "EventsInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            },
+            "minItems": 1,
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "events"
+        ]
+      },
+      "CampaignList": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CampaignPublic"
+            },
+            "maxItems": 50
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "requestId"
+        ]
+      },
+      "InvitationList": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvitationSummary"
+            },
+            "maxItems": 50
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "requestId"
+        ]
+      },
+      "AdminLoginInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "username": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024
+          },
+          "totp": {
+            "type": "string",
+            "pattern": "^[0-9]{6}$"
+          }
+        },
+        "required": [
+          "username",
+          "password",
+          "totp"
+        ]
+      },
+      "AdminSession": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "admin": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "username": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "roles": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "editor",
+                    "publisher",
+                    "admin"
+                  ]
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "id",
+              "username",
+              "roles"
+            ]
+          },
+          "csrfToken": {
+            "type": "string",
+            "minLength": 32
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "admin",
+          "csrfToken",
+          "expiresAt",
+          "requestId"
+        ]
+      },
+      "CampaignDraftInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,63}$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "artistName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "albumName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "startsAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "endsAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rightsUntil": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "retainUntil": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "coverAssetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "shareCoverAssetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "listenDestination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ListenDestination"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "slug",
+          "title",
+          "artistName",
+          "albumName"
+        ]
+      },
+      "CampaignPatchInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "artistName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "albumName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "startsAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "endsAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rightsUntil": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "retainUntil": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "coverAssetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "shareCoverAssetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "listenDestination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ListenDestination"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "expectedVersion"
+        ],
+        "minProperties": 2
+      },
+      "CampaignAdmin": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,63}$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "artistName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "albumName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "status": {
+            "$ref": "#/components/schemas/CampaignStatus"
+          },
+          "startsAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "endsAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rightsUntil": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "retainUntil": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currentReleaseId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "coverAssetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "shareCoverAssetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "listenDestination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ListenDestination"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "slug",
+          "title",
+          "artistName",
+          "albumName",
+          "status",
+          "startsAt",
+          "endsAt",
+          "rightsUntil",
+          "retainUntil",
+          "currentReleaseId",
+          "coverAssetId",
+          "shareCoverAssetId",
+          "listenDestination"
+        ]
+      },
+      "AdminCampaignList": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CampaignAdmin"
+            },
+            "maxItems": 50
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "requestId"
+        ]
+      },
+      "UploadInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "audio",
+              "background_image",
+              "background_video",
+              "font",
+              "cover"
+            ]
+          },
+          "fileName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "contentType": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 209715200
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "kind",
+          "fileName",
+          "contentType",
+          "bytes",
+          "sha256"
+        ]
+      },
+      "UploadTicket": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "assetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "uploadUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "method": {
+            "const": "PUT"
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "assetId",
+          "uploadUrl",
+          "method",
+          "headers",
+          "expiresAt",
+          "requestId"
+        ]
+      },
+      "Asset": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "technicalStatus": {
+            "type": "string",
+            "enum": [
+              "awaiting_upload",
+              "uploaded",
+              "checking",
+              "valid",
+              "invalid"
+            ]
+          },
+          "approvalStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "withdrawn"
+            ]
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "rightsUntil": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fileName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "technicalStatus",
+          "approvalStatus",
+          "bytes",
+          "sha256",
+          "rightsUntil",
+          "errorCode",
+          "fileName"
+        ]
+      },
+      "ApproveAssetInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rightsUntil": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rightsEvidenceRef": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "confirm": {
+            "const": true
+          }
+        },
+        "required": [
+          "rightsUntil",
+          "rightsEvidenceRef",
+          "confirm"
+        ]
+      },
+      "LayoutInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "fontAssetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "headline": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "只允许一个{displayName}变量；动态主文案整句画入nameBox，不写入母版。"
+          },
+          "subheadline": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "只允许{artistName}/{albumName}变量；固定文本预制进母版。"
+          },
+          "nameBox": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "x": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "y": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "width": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "height": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "fontSize": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "minFontSize": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "maxLines": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 2
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "width",
+              "height",
+              "fontSize",
+              "minFontSize",
+              "maxLines"
+            ]
+          }
+        },
+        "required": [
+          "fontAssetId",
+          "headline",
+          "subheadline",
+          "nameBox"
+        ]
+      },
+      "VariantInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "audioAssetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "backgroundAssetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "layout": {
+            "$ref": "#/components/schemas/LayoutInput"
+          }
+        },
+        "required": [
+          "label",
+          "audioAssetId",
+          "backgroundAssetId",
+          "layout"
+        ]
+      },
+      "VariantAdmin": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "campaignId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "configHash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "preparing",
+              "ready",
+              "failed",
+              "withdrawn"
+            ]
+          },
+          "approvalStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "withdrawn"
+            ]
+          },
+          "baseVideoAssetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "audioAssetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "backgroundAssetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "layout": {
+            "$ref": "#/components/schemas/LayoutInput"
+          }
+        },
+        "required": [
+          "id",
+          "campaignId",
+          "label",
+          "configHash",
+          "status",
+          "approvalStatus",
+          "baseVideoAssetId",
+          "audioAssetId",
+          "backgroundAssetId",
+          "layout"
+        ]
+      },
+      "VariantApprovalInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedConfigHash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "confirm": {
+            "const": true
+          }
+        },
+        "required": [
+          "expectedConfigHash",
+          "confirm"
+        ]
+      },
+      "PublishInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "rules": {
+            "$ref": "#/components/schemas/Rules"
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "variantId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000000
+                }
+              },
+              "required": [
+                "variantId",
+                "weight"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 500
+          },
+          "listenEvidenceRef": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "expectedVersion",
+          "rules",
+          "variants",
+          "listenEvidenceRef"
+        ],
+        "description": "mini_program 收听入口需发布者提供真机验证证据引用；search_hint 可为null。封面/分享图、时限、素材与预览必须就绪。"
+      },
+      "PublishResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "releaseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "live"
+            ]
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "campaignId",
+          "releaseId",
+          "version",
+          "status",
+          "requestId"
+        ]
+      },
+      "AdminActionInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "confirm": {
+            "const": true
+          }
+        },
+        "required": [
+          "expectedVersion",
+          "reason",
+          "confirm"
+        ]
+      },
+      "WithdrawalInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "confirm": {
+            "const": true
+          }
+        },
+        "required": [
+          "reason",
+          "confirm"
+        ]
+      },
+      "Job": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "render",
+              "prepare",
+              "asset_check"
+            ]
+          },
+          "entityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "stage": {
+            "$ref": "#/components/schemas/Stage"
+          },
+          "generation": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "attempts": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lastErrorCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "entityId",
+          "status",
+          "stage",
+          "generation",
+          "attempts",
+          "lastErrorCode",
+          "updatedAt"
+        ]
+      },
+      "JobList": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Job"
+            },
+            "maxItems": 50
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "requestId"
+        ]
+      },
+      "AdminRetryInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "render",
+              "prepare",
+              "asset_check"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "kind",
+          "reason"
+        ]
+      },
+      "Metrics": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "drawUsers": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "readyUsers": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "saveSuccessCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "shareIntentCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "renderSuccessRatio": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "renderP95Seconds": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "shareVisitCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "成功读取合法分享内容的请求次数，含重复读取和未识别的所有者访问；不是去重人数。"
+          }
+        },
+        "required": [
+          "campaignId",
+          "from",
+          "to",
+          "drawUsers",
+          "readyUsers",
+          "saveSuccessCount",
+          "shareIntentCount",
+          "shareVisitCount",
+          "renderSuccessRatio",
+          "renderP95Seconds",
+          "requestId"
+        ]
+      },
+      "ListenDestination": {
+        "anyOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "search_hint"
+              },
+              "platformName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "query": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            },
+            "required": [
+              "type",
+              "platformName",
+              "query"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "mini_program"
+              },
+              "platformName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "appId": {
+                "type": "string",
+                "pattern": "^wx[a-f0-9]{16}$"
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1024
+              }
+            },
+            "required": [
+              "type",
+              "platformName",
+              "appId",
+              "path"
+            ]
+          }
+        ]
+      },
+      "PublishedVariant": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "totalWeight": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "weight",
+          "totalWeight"
+        ]
+      },
+      "VariantPreview": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "variantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "configHash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "nameCase": {
+            "type": "string",
+            "enum": [
+              "short",
+              "long",
+              "latin"
+            ]
+          },
+          "videoUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "posterUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "variantId",
+          "configHash",
+          "nameCase",
+          "videoUrl",
+          "posterUrl",
+          "expiresAt",
+          "requestId"
+        ]
+      },
+      "AssetList": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Asset"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "requestId"
+        ]
+      },
+      "VariantList": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariantAdmin"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "requestId"
+        ]
+      }
+    }
+  },
+  "x-error-catalog": {
+    "INVALID_REQUEST": {
+      "httpStatus": 400
+    },
+    "NAME_INVALID": {
+      "httpStatus": 400
+    },
+    "NAME_REJECTED": {
+      "httpStatus": 422
+    },
+    "SESSION_EXPIRED": {
+      "httpStatus": 401
+    },
+    "AUTH_FAILED": {
+      "httpStatus": 401
+    },
+    "ADMIN_FORBIDDEN": {
+      "httpStatus": 403
+    },
+    "CSRF_FAILED": {
+      "httpStatus": 403
+    },
+    "NOT_FOUND": {
+      "httpStatus": 404
+    },
+    "NAME_VERSION_CONFLICT": {
+      "httpStatus": 409
+    },
+    "REVISION_IN_PROGRESS": {
+      "httpStatus": 409
+    },
+    "IDEMPOTENCY_CONFLICT": {
+      "httpStatus": 409
+    },
+    "CONFIG_VERSION_CONFLICT": {
+      "httpStatus": 409
+    },
+    "INVALID_STATE": {
+      "httpStatus": 409
+    },
+    "MEDIA_NOT_READY": {
+      "httpStatus": 409
+    },
+    "SHARE_REVOKED": {
+      "httpStatus": 410
+    },
+    "CAMPAIGN_UNAVAILABLE": {
+      "httpStatus": 410
+    },
+    "RIGHTS_EXPIRED": {
+      "httpStatus": 410
+    },
+    "RATE_LIMITED": {
+      "httpStatus": 429
+    },
+    "RETRY_EXHAUSTED": {
+      "httpStatus": 409
+    },
+    "ASSET_NOT_READY": {
+      "httpStatus": 422
+    },
+    "PREVIEW_NOT_APPROVED": {
+      "httpStatus": 422
+    },
+    "PUBLICATION_BLOCKED": {
+      "httpStatus": 422
+    },
+    "JOB_NOT_RETRYABLE": {
+      "httpStatus": 409
+    },
+    "RENDER_CAPACITY_BUSY": {
+      "httpStatus": 503
+    },
+    "MODERATION_UNAVAILABLE": {
+      "httpStatus": 503
+    },
+    "WX_LOGIN_UNAVAILABLE": {
+      "httpStatus": 503
+    },
+    "STORAGE_UNAVAILABLE": {
+      "httpStatus": 503
+    },
+    "INTERNAL_ERROR": {
+      "httpStatus": 500
+    }
+  },
+  "x-admin-origin-policy": "production ADMIN_ORIGIN == PUBLIC_API_ORIGIN; admin UI /admin/; API /api/v1/admin; exact Origin checks, no wildcard CORS"
+}

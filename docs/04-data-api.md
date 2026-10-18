@@ -11,7 +11,7 @@
 | `campaigns` | `id uuid`、`slug text`、`title text`、`artist_name text`、`album_name text`、`status text`、`starts_at`、`ends_at`、`retain_until`、`rights_until`、`current_release_id uuid` | slug 唯一；开始早于结束；保留期限不晚于权利截止；带乐队运营联系方式引用 |
 | `assets` | `id uuid`、`kind text`、`object_key text`、`sha256 text`、`mime text`、`bytes bigint`、`media_info jsonb`、`rights_until`、`approval_status` | 上传后不可原地替换；对象路径私有；metadata 保存时长、宽高、音轨等 |
 | `variants` | `id uuid`、`campaign_id uuid`、`label text`、`audio_asset_id`、`background_asset_id`、`base_video_asset_id`、`font_asset_id`、`layout jsonb`、`config_hash text`、`status` | 每条代表不可变版本；更新创建新 id；资产 FK 不允许随意级联删除 |
-| `campaign_releases` | `id uuid`、`campaign_id uuid`、`version int`、`rules jsonb`、`published_at`、`published_by` | UNIQUE(campaign_id, version)；发布后快照不可变 |
+| `campaign_releases` | `id uuid`、`campaign_id uuid`、`version int`、`rules jsonb`、`published_at`、`published_by`、`display_snapshot jsonb`（标题、艺人、专辑、封面、收听入口与确认引用） | UNIQUE(campaign_id, version)；发布后快照不可变 |
 | `release_variants` | `release_id uuid`、`variant_id uuid`、`weight int` | 联合主键；weight > 0；发布前确保至少一项且总权重不超安全随机范围 |
 | `invitations` | `id uuid`、`user_id uuid`、`campaign_id uuid`、`release_id uuid`、`variant_id uuid`、`current_revision_id uuid?`、`pending_revision_id uuid?`、`status`、`drawn_at`、`deleted_at` | **UNIQUE(user_id, campaign_id)**；款式／发布版本永久固定；指针必须指向本邀请函版本 |
 | `invitation_revisions` | `id uuid`、`invitation_id uuid`、`revision_no int`、`name_snapshot text`、`name_version int`、`render_spec jsonb`、`render_key text`、`status text`、`video_key text?`、`poster_key text?`、`media_expires_at` | UNIQUE(invitation_id, revision_no)；render_key 唯一；包含字体／布局／母版哈希 |
@@ -21,7 +21,7 @@
 | `daily_usage` | `user_id`、`campaign_id?`、`action`、`local_date`、`used int`、`reserved int` | 用户／作用域／动作／日期唯一；并发先预留，成功转 used，失败释放；NULL 范围用固定 scope_key 规范化 |
 | `admin_audit` / `event_log` | 管理动作摘要／事件类型、内部 actor_id、实体 id、时间、request_id | 不记录称呼原文、OpenID、令牌或密钥；运营与用户行为分表分权 |
 
-方案中的管理身份由独立身份提供方或成熟鉴权模块管理，保留本地 `admin_roles`／权限映射；不把管理员密码放入业务配置。数据库中外键、唯一约束、非负 CHECK 与状态枚举应落成实际迁移，不能只靠前端约定。
+管理身份采用独立 `admin_users/admin_sessions`、Argon2id与TOTP，首版本地管理；会话与权限细节见 docs/13。不把明文密码或TOTP种子放入业务配置。数据库中外键、唯一约束、非负 CHECK 与状态枚举应落成实际迁移，不能只靠前端约定。
 
 ## 2. 状态模型
 
@@ -39,72 +39,74 @@
 
 基础路径 `/api/v1`；JSON UTF-8；所有写接口校验 Content-Type、请求大小和字段白名单；用户接口使用 `Authorization: Bearer <session>`，管理端独立管理员会话。错误统一包含 `code`、用户可见 `message`、`requestId` 和可选 `retryAfterSeconds`，不透传原始 FFmpeg 日志。
 
-抽取、改名合成、重试、分享创建和删除请求使用 `Idempotency-Key`（客户端生成 UUID）。同作用域＋键＋相同请求返回同一资源；相同键不同请求体返回 409。幂等记录保留至少 24 小时，记录过期后仍由业务唯一约束防止重复抽取；删除和分享操作也按实体状态幂等执行。
+称呼修改、抽取、改名合成、重试、分享创建和删除请求按OpenAPI要求使用 `Idempotency-Key`（客户端生成 UUID）。同作用域＋键＋相同请求返回同一资源；相同键不同请求体返回 409。幂等记录保留至少 24 小时，记录过期后仍由业务唯一约束防止重复抽取；删除和分享操作也按实体状态幂等执行。
 
-## 4. 用户接口清单
+## 4. 全部 HTTP 操作（与 OpenAPI 同步）
 
-| 方法与路径 | 请求／用途 | 返回与关键约束 |
-| --- | --- | --- |
-| `POST /auth/wechat` | `{code, privacyNoticeVersion}` | `{accessToken, expiresAt, user}`；后端验证微信身份；隐私同意如适用需另留证明，不能只信版本字符串 |
-| `GET /me` | 当前用户 | `{id, displayName, nameVersion}`；不返回 OpenID |
-| `PATCH /me` | `{displayName, expectedNameVersion}` | 审核通过后更新版本；409 提示刷新称呼 |
-| `GET /campaigns` | `cursor, limit` | 可展示活动及状态；不暴露未发布资产 |
-| `GET /campaigns/{id}` | 活动详情 | 规则、活动时间、有效款式说明、`myInvitationId`、`canDraw` |
-| `POST /campaigns/{id}/draw` | `{expectedNameVersion}` | 首次 202；已有则 200 返回同一邀请函；不接受自选 variant |
-| `GET /me/invitations` | `cursor, limit` | 当前用户作品摘要列表 |
-| `GET /invitations/{id}` | 恢复／轮询 | 所有者专用；current、pending、可执行动作；他人请求统一 404 |
-| `POST /invitations/{id}/revisions` | `{expectedNameVersion}` | 使用当前用户新称呼生成；202；同名返回原版本；不改变款式 |
-| `POST /invitations/{id}/retry` | `{revisionId}` | 仅 `canRetry=true` 时唤醒预算内重试，或启动合法过期重建；202 或返回现有处理中任务；不改变款式 |
-| `GET /invitations/{id}/media` | `revisionId, purpose=playback\|download` | 短期地址和 expiresAt；仅就绪且拥有访问权可签发 |
-| `POST /invitations/{id}/share` | `{revisionId, consent:true}` | 201：`sharePath, expiresAt`；仅当前成功版本可创建，令牌只在创建响应明文出现 |
-| `DELETE /invitations/{id}/share` | 关闭该邀请函全部分享 | 204，立即阻止后续分享 API 访问 |
-| `GET /shares/{token}` | 分享令牌，不要求个人会话 | 已允许的只读专辑／邀请函／短期媒体信息；无效统一 404／410，不暴露内部用户 id |
-| `DELETE /invitations/{id}` | `{confirm:true}` | 202 清理中；删除不会增加同活动抽取额度，保留最小抽取占位记录至活动清理 |
-| `DELETE /me` | `{confirm:true}` | 202；立即撤销会话与分享，异步清理个人记录；完全删除后再登录视作新用户，不承诺永久防重抽 |
-| `POST /events` | 限定事件批量，最多 20 条 | 202；事件字段白名单与大小限制；关键计数以服务端事件为准 |
+本表按当前机器契约生成；完整字段、required、响应和权限见 [openapi.json](../specs/openapi.json)。基路径 `/api/v1`。响应直接返回对象。
 
-公开活动和分享访问接口如允许匿名读取，采用单独 DTO，不复用带 `myInvitationId` 的完整用户响应。`POST /auth/wechat` 不进行无条件自动重试一次性 code；交换失败由客户端重新获取 code。
+| 方法/路径 | operationId | 成功状态 | 用途 |
+| --- | --- | --- | --- |
+| `POST /auth/wechat` | `createSession` | 201 | 微信code换取业务会话 |
+| `GET /me` | `getMe` | 200 | 当前用户 |
+| `PATCH /me` | `updateName` | 200 | 修改默认称呼 |
+| `DELETE /me` | `deleteAccount` | 202 | 删除账号并启动清理 |
+| `GET /campaigns` | `listCampaigns` | 200 | 活动列表 |
+| `GET /campaigns/{id}` | `getCampaign` | 200 | 本人活动信息与抽取资格 |
+| `GET /public/campaigns` | `listPublicCampaigns` | 200 | 匿名可见活动列表 |
+| `GET /public/campaigns/{id}` | `getPublicCampaign` | 200 | 匿名活动详情 |
+| `POST /campaigns/{id}/draw` | `drawInvitation` | 202/200 | 原子创建一次抽取 |
+| `GET /me/invitations` | `listMyInvitations` | 200 | 本人作品列表 |
+| `GET /invitations/{id}` | `getInvitation` | 200 | 查询本人邀请函与生成状态 |
+| `DELETE /invitations/{id}` | `deleteInvitation` | 202 | 删除作品内容并保留最小抽取占位 |
+| `POST /invitations/{id}/revisions` | `createNameRevision` | 202/200 | 以当前称呼更新原款邀请函 |
+| `DELETE /invitations/{id}/pending-revision` | `cancelFailedPending` | 200 | 取消失败的改名版本 |
+| `POST /invitations/{id}/retry` | `retryInvitation` | 202/200 | 唤醒可恢复任务或重建过期文件 |
+| `GET /invitations/{id}/media` | `getMedia` | 200 | 获取当前ready版本短期媒体地址 |
+| `POST /invitations/{id}/share` | `createShare` | 201/200 | 明确开启当前版本分享 |
+| `DELETE /invitations/{id}/share` | `revokeShares` | 204 | 关闭邀请函全部分享 |
+| `GET /shares/{token}` | `getSharedInvitation` | 200 | 使用分享令牌只读访问 |
+| `POST /events` | `ingestEvents` | 202 | 接收去敏客户端事件 |
+| `POST /admin/auth/session` | `adminLogin` | 201 | 管理员密码与TOTP登录 |
+| `GET /admin/auth/session` | `adminSession` | 200 | 读取管理员会话与CSRF令牌 |
+| `DELETE /admin/auth/session` | `adminLogout` | 204 | 退出管理员会话 |
+| `GET /admin/campaigns` | `adminListCampaigns` | 200 | 后台活动列表 |
+| `POST /admin/campaigns` | `adminCreateCampaign` | 201 | 创建活动草稿 |
+| `GET /admin/campaigns/{id}` | `adminGetCampaign` | 200 | 后台活动详情 |
+| `PATCH /admin/campaigns/{id}` | `adminUpdateCampaign` | 200 | 版本保护的活动更新 |
+| `POST /admin/assets/upload-ticket` | `adminUploadTicket` | 201 | 创建受限素材上传票据 |
+| `POST /admin/assets/{id}/complete` | `adminCompleteAsset` | 202 | 提交上传完成并启动媒体检查 |
+| `GET /admin/assets/{id}` | `adminGetAsset` | 200 | 读取素材检查状态 |
+| `POST /admin/assets/{id}/approve` | `adminApproveAsset` | 200 | 确认素材使用范围 |
+| `POST /admin/assets/{id}/withdraw` | `adminWithdrawAsset` | 202 | 撤回素材并封禁受影响作品 |
+| `POST /admin/campaigns/{id}/variants` | `adminCreateVariant` | 201 | 创建不可变款式版本 |
+| `GET /admin/campaigns/{id}/variants` | `adminListVariants` | 200 | 查询活动的不可变款式列表 |
+| `GET /admin/variants/{id}` | `adminGetVariant` | 200 | 查询款式与母版状态 |
+| `POST /admin/variants/{id}/prepare` | `adminPrepareVariant` | 202 | 预制款式母版 |
+| `POST /admin/variants/{id}/approve` | `adminApproveVariant` | 200 | 确认母版与排版预览 |
+| `POST /admin/campaigns/{id}/publish` | `adminPublishCampaign` | 201 | 验证并发布不可变配置快照 |
+| `POST /admin/campaigns/{id}/pause` | `adminPauseCampaign` | 200 | 暂停新增生成 |
+| `POST /admin/campaigns/{id}/resume` | `adminResumeCampaign` | 200 | 恢复有效期内活动 |
+| `POST /admin/campaigns/{id}/withdraw` | `adminWithdrawCampaign` | 200 | 下架活动与撤回访问 |
+| `GET /admin/jobs` | `adminListJobs` | 200 | 查看渲染和母版预制任务 |
+| `POST /admin/jobs/{id}/retry` | `adminRetryJob` | 202 | 排障后授权新执行周期 |
+| `GET /admin/campaigns/{id}/metrics` | `adminGetMetrics` | 200 | 按定义查询活动统计 |
+| `GET /admin/assets` | `adminListAssets` | 200 | 分页查询可选择素材 |
+| `GET /admin/variants/{id}/preview` | `adminGetVariantPreview` | 200 | 读取母版对应固定测试名字成片 |
 
-## 5. 管理接口清单
+## 5. 用户与管理请求的精确约定
 
-所有 `/admin/*` 入口需要独立管理员鉴权、CSRF 保护（使用 Cookie 时）、RBAC 与审计。首版设编辑、发布、管理员三类权限；同一运营可持多角色，但发布和删除留明确操作记录。
+登录输入 `{code, privacyNoticeVersion, consentAction:"agree"}`，返回201 Session；code一次性、不复用、不记录。`PATCH /me`携带Idempotency-Key和expectedNameVersion。JSON结构与完整示例在 [api-examples.json](../specs/api-examples.json)，不使用短假ID模拟可执行请求。
 
-| 接口组 | 建议路径 | 行为 |
-| --- | --- | --- |
-| 活动编辑 | `GET/POST /admin/campaigns`、`PATCH /admin/campaigns/{id}` | 只编辑草稿字段；预览与正式活动隔离 |
-| 上传与检验 | `POST /admin/assets/upload-ticket`、`POST /admin/assets/{id}/complete`、`GET /admin/assets/{id}` | 限定类型／大小／对象路径的上传票据，服务端媒体检查后可用 |
-| 款式管理 | `POST /admin/campaigns/{id}/variants`、`POST /admin/variants/{id}/prepare` | 创建不可变版本、预制母版、检查结果 |
-| 发布与控制 | `POST /admin/campaigns/{id}/publish`、`POST /admin/campaigns/{id}/pause`、`POST /admin/campaigns/{id}/resume`、`POST /admin/campaigns/{id}/withdraw` | 发布配置快照；恢复只允许活动期内；撤回给出原因并中止相关服务 |
-| 任务与数据 | `GET /admin/jobs`、`POST /admin/jobs/{id}/retry`、`GET /admin/campaigns/{id}/metrics` | 任务排查／受控重试；不提供任意用户数据导出 |
+后台使用独立用户名/密码/TOTP、同源Cookie和CSRF；实现见 [docs/13](13-database-implementation.md)。角色editor/publisher/admin由每个操作的x-required-roles-any控制；权限是服务端判断。素材列表、款式列表、固定预览均有接口；封面和分享图用已审核cover资产，收听只允许search_hint或已验证mini_program。
 
-## 6. 关键响应示例
+公开活动variants只来源于当前不可变发布快照，返回weight/totalWeight，totalWeight须等于该快照权重总和；不返回未发布资产和私人邀请字段。用户详情current/pending/capabilities以HTTP契约为准。
 
-请求 `POST /campaigns/campaign_demo/draw`，身份和幂等键放 Header；下例的短 id 仅用于阅读，真实实现采用 UUID。
+## 6. 发布、预览与资料完整性
 
-```json
-{"expectedNameVersion": 2}
-```
+后台上传票据先建awaiting_upload资产；complete确认真实对象后入asset_check_jobs；检查通过且权利确认后才能引用。prepare生成母版与三种固定测试名字成片，preview读取短期地址。批准动作绑定configHash，不能批准尚未看到的旧预览。
 
-首次创建返回 HTTP 202：
-
-```json
-{
-  "invitationId": "inv_demo",
-  "campaignId": "campaign_demo",
-  "variant": {"id": "variant_demo", "label": "夜色来信"},
-  "currentRevision": null,
-  "pendingRevision": {
-    "id": "rev_demo",
-    "nameSnapshot": "小林",
-    "status": "queued",
-    "stage": "queued"
-  },
-  "pollAfterMs": 2000,
-  "requestId": "req_demo"
-}
-```
-
-生成完成后查询响应包含 `currentRevision.status="ready"` 和媒体元数据；签名 URL 按需获取，不固化到数据库快照或埋点。分享响应的 `sharePath` 形如 `/pages/share/index?t=<opaque-token>`，只含不透明令牌。
+发布要求coverAssetId/shareCoverAssetId和listenDestination完整；mini_program额外提交listenEvidenceRef。音频/背景/字体/封面和预览均通过检查，所有时限合法后才建立release。更新活动显示文案/封面/收听入口先进入草稿；公开接口读release快照直到下一次publish，避免未审核变更泄漏。
 
 ## 7. 抽取事务伪代码
 

@@ -1,0 +1,2191 @@
+{
+  "version": "1.2",
+  "status": "implementation_not_started",
+  "models": {
+    "D": "DeepSeek V4.1 Flash 或同级",
+    "G": "Grok 4.7 或同级",
+    "C": "本对话 Codex",
+    "H": "项目负责人/管理员/真机测试者"
+  },
+  "tasks": [
+    {
+      "id": "S00",
+      "title": "核对输入与账号台账",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P00",
+      "dependsOn": [],
+      "humanInputs": [
+        "H01"
+      ],
+      "files": [
+        "docs/project-inputs.md",
+        "docs/runtime-versions.md"
+      ],
+      "readSections": [
+        {
+          "path": "docs/18-human-operations.md",
+          "headingPrefix": "H01"
+        },
+        {
+          "path": "docs/14-synthesis-decisions.md",
+          "headingPrefix": "1."
+        }
+      ],
+      "steps": [
+        "核对当前仓库/PR/提交；不新建另一仓库",
+        "按H01–H03列主体/AppID/域名/素材/版权/设备输入与责任人",
+        "记录已确定默认值和真实缺项，不把缺项填成已完成"
+      ],
+      "checks": [
+        "台账每一项有值或明确待提供、责任人与影响",
+        "未提交秘密；不将平台未确认类目写成固定可用"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "git status --short"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S00.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S01",
+      "title": "建立 workspace 与唯一构建",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P01",
+      "dependsOn": [
+        "S00"
+      ],
+      "humanInputs": [],
+      "files": [
+        "package.json",
+        "pnpm-workspace.yaml",
+        "pnpm-lock.yaml",
+        "tsconfig.base.json",
+        "scripts/build-miniprogram.mjs",
+        "apps/miniprogram/",
+        "apps/admin/",
+        "services/",
+        "packages/",
+        "infra/compose.dev.yml",
+        "vitest.config.ts",
+        "docs/runtime-versions.md"
+      ],
+      "readSections": [
+        {
+          "path": "docs/08-engineering-blueprint.md",
+          "headingPrefix": "1."
+        },
+        {
+          "path": "docs/08-engineering-blueprint.md",
+          "headingPrefix": "3."
+        },
+        {
+          "path": "docs/08-engineering-blueprint.md",
+          "headingPrefix": "4."
+        }
+      ],
+      "steps": [
+        "锁Node22/pnpm10/PG18及兼容依赖补丁；提交packageManager/lockfile",
+        "建立原生src→dist编译、静态复制、禁止裸Node导入；app注册entry/discover/me等空壳但不声称业务存在",
+        "创建开发数据库和隔离测试库；建立真实typecheck/lint及根test:file runner；未创建业务测试不伪装通过",
+        "API/Worker生产编译JS用NodeNext配对解析与.js相对import；mini端CommonJS/ES2018无DOM/Node类型"
+      ],
+      "checks": [
+        "pnpm install --frozen-lockfile 成功且可重装",
+        "pnpm typecheck；pnpm build:mp:dev；Docker引擎可达并启动开发库",
+        "test:file指定不存在文件必须非零；构建禁止把测试/秘密/Node包复制进dist"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm build:mp:dev",
+        "docker compose -f infra/compose.dev.yml up -d"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S01.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S02",
+      "title": "标准契约校验与类型生成",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P02",
+      "dependsOn": [
+        "S01"
+      ],
+      "humanInputs": [],
+      "files": [
+        "packages/contracts/",
+        "scripts/check-contracts.mjs",
+        "scripts/generate-contracts.mjs",
+        "tests/contracts/schema.test.ts",
+        "package.json"
+      ],
+      "readSections": [
+        {
+          "path": "docs/04-data-api.md",
+          "headingPrefix": "3."
+        },
+        {
+          "path": "docs/08-engineering-blueprint.md",
+          "headingPrefix": "4."
+        }
+      ],
+      "steps": [
+        "使用OpenAPI3.1验证器和JSON Schema2020-12验证器；开启格式检查",
+        "从specs生成纯DTO；小程序只import type，不带服务端验证器",
+        "生成类型可重复，响应additionalProperties=false，样例与错误码全部校验"
+      ],
+      "checks": [
+        "完整标准校验通过，故意坏$ref/错误样例必须失败",
+        "生成两次git diff为空；mini编译无运行时裸导入"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/contracts/schema.test.ts",
+        "pnpm contract:check",
+        "pnpm contracts:generate"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S02.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S03",
+      "title": "真实中文视频技术验证",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P04",
+      "dependsOn": [
+        "S01"
+      ],
+      "humanInputs": [
+        "H03"
+      ],
+      "files": [
+        "spikes/render/",
+        "services/render-worker/src/media/",
+        "tests/media/spike.test.ts",
+        "tests/fixtures/",
+        "services/render-worker/package.json",
+        "pnpm-lock.yaml"
+      ],
+      "readSections": [
+        {
+          "path": "docs/16-media-implementation.md"
+        }
+      ],
+      "steps": [
+        "使用标TEST的自有音画和已授权字体，记录来源/hash",
+        "实现文字PNG、FFmpeg参数数组、ffprobe/MP4 box检查；输出20秒测试MP4与poster",
+        "记录耗时/内存/文件大小；测试非法字符/缺字/长文案/无音轨"
+      ],
+      "checks": [
+        "成片真实可独立播放且有字有声；规格全部通过",
+        "缺字体/错误音轨/超长参数拒绝，已有aborted信号不启动子进程"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/media/spike.test.ts",
+        "pnpm media:spike"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S03.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S04",
+      "title": "M0 原生媒体与真机验证",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P04",
+      "dependsOn": [
+        "S03",
+        "S02"
+      ],
+      "humanInputs": [
+        "H02",
+        "H03",
+        "H04"
+      ],
+      "files": [
+        "apps/miniprogram/src/pages/diagnostics/",
+        "apps/miniprogram/src/services/media-save.ts",
+        "apps/miniprogram/src/services/privacy.ts",
+        "apps/miniprogram/src/components/privacy-dialog/",
+        "scripts/build-miniprogram.mjs",
+        "docs/evidence/G1.md"
+      ],
+      "readSections": [
+        {
+          "path": "docs/09-wechat-development.md",
+          "headingPrefix": "5."
+        },
+        {
+          "path": "docs/09-wechat-development.md",
+          "headingPrefix": "6."
+        },
+        {
+          "path": "docs/18-human-operations.md",
+          "headingPrefix": "H04"
+        }
+      ],
+      "steps": [
+        "构建dev/staging专用diagnostics页面；prod打包完全排除",
+        "接入短期测试媒体地址，原生video/保存/通用卡片，不伪造动态业务",
+        "完成H04双系统与第二微信证据，失败按错误分层定位"
+      ],
+      "checks": [
+        "关闭域名豁免/手机开发调试仍可播放保存",
+        "相册内实际有姓名/声音；拒绝路径可恢复；prod包不含diagnostics"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm build:mp:staging"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S04.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S05",
+      "title": "API 启动与统一错误",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P01",
+      "dependsOn": [
+        "S02"
+      ],
+      "humanInputs": [],
+      "files": [
+        "services/api/src/app.ts",
+        "services/api/src/server.ts",
+        "services/api/src/plugins/",
+        "tests/integration/api-base.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/04-data-api.md",
+          "headingPrefix": "3."
+        },
+        {
+          "path": "docs/08-engineering-blueprint.md",
+          "headingPrefix": "2."
+        }
+      ],
+      "steps": [
+        "Fastify app工厂与监听分开；实现health/live、health/ready",
+        "注册请求大小/字段白名单/统一错误与requestId",
+        "日志去敏Authorization/Cookie/code/名字/签名地址，禁止把原始异常返回客户端"
+      ],
+      "checks": [
+        "inject验证2xx/4xx/5xx和错误结构；DB断开ready失败live仍成功",
+        "日志夹具断言秘密不出现"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/api-base.test.ts"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S05.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S06",
+      "title": "环境配置与适配器隔离",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P01",
+      "dependsOn": [
+        "S05"
+      ],
+      "humanInputs": [],
+      "files": [
+        "services/api/src/config/",
+        "services/api/src/adapters/",
+        "services/render-worker/src/config/",
+        "tests/unit/config.test.ts",
+        "infra/dev.env.example",
+        "infra/prod.env.example"
+      ],
+      "readSections": [
+        {
+          "path": "docs/08-engineering-blueprint.md",
+          "headingPrefix": "5."
+        },
+        {
+          "path": "docs/17-deployment-runbook.md",
+          "headingPrefix": "1."
+        },
+        {
+          "path": "docs/17-deployment-runbook.md",
+          "headingPrefix": "2."
+        }
+      ],
+      "steps": [
+        "实现微信身份、内容审核、对象存储接口；dev/test替身只能显式注入",
+        "配置缺失只报告键名，staging/prod发现mock或默认秘密拒绝启动",
+        "固定APP_ENV/API_ORIGIN，不由envVersion自动切后端；生产管理端同源"
+      ],
+      "checks": [
+        "生产mock组合逐个启动失败；dev测试替身不接受公网请求身份",
+        "API和Worker配置权限最小化，日志不打印secret值"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/unit/config.test.ts"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S06.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S07",
+      "title": "身份库与迁移执行器",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P02",
+      "dependsOn": [
+        "S05",
+        "S06"
+      ],
+      "humanInputs": [],
+      "files": [
+        "db/migrations/001_identity.sql",
+        "db/runner.ts",
+        "tests/integration/db-identity.test.ts",
+        "package.json"
+      ],
+      "readSections": [
+        {
+          "path": "docs/04-data-api.md",
+          "headingPrefix": "1."
+        },
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "1."
+        },
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "2."
+        }
+      ],
+      "steps": [
+        "建立users/sessions/privacy_consents及唯一CHECK/FK",
+        "实现迁移事务/校验和/互斥锁，失败不记录完成",
+        "空库与已应用重复执行；不得自动重建生产库"
+      ],
+      "checks": [
+        "两个迁移器并发只有一次应用；改旧文件校验和必须失败",
+        "重复身份/会话hash被DB拒绝；隐私记录不替代平台授权"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/db-identity.test.ts"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S07.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S08",
+      "title": "活动素材与快照库",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P02",
+      "dependsOn": [
+        "S07"
+      ],
+      "humanInputs": [],
+      "files": [
+        "db/migrations/002_content.sql",
+        "tests/integration/db-content.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/04-data-api.md",
+          "headingPrefix": "1."
+        },
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "2."
+        }
+      ],
+      "steps": [
+        "建立活动、资产、款式、release/关联表及display_snapshot",
+        "增加同活动复合外键、正权重、日期CHECK和引用删除限制",
+        "发布快照不能原位编辑；variant变更建立新ID"
+      ],
+      "checks": [
+        "跨活动variant/release引用被DB拒绝",
+        "使用中资产不能级联删除；草稿修改不影响既有release"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/db-content.test.ts"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S08.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S09",
+      "title": "邀请函、任务、额度与管理库",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P02",
+      "dependsOn": [
+        "S08"
+      ],
+      "humanInputs": [],
+      "files": [
+        "db/migrations/003_invitations.sql",
+        "db/migrations/004_idempotency.sql",
+        "db/migrations/005_admin.sql",
+        "db/migrations/006_jobs.sql",
+        "db/migrations/007_indexes.sql",
+        "tests/integration/db-jobs.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "1."
+        },
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "2."
+        },
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "8."
+        }
+      ],
+      "steps": [
+        "按docs/13建current/pending复合FK、唯一邀请函与单在途版本约束",
+        "建任务、资产检查、母版预制、清理与attempt审计，generation/epoch不回退",
+        "建立幂等、scope_key非空每日used/reserved、管理会话、角色和审计",
+        "为队列/游标/到期建索引；记录完整迁移schema输出"
+      ],
+      "checks": [
+        "重复抽取、跨邀请函指针、两个在途revision被DB拒绝",
+        "同scope额度唯一且非负；空库完整迁移与从001升级均成功"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/db-jobs.test.ts"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S09.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S10",
+      "title": "微信登录与可撤销会话",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P03",
+      "dependsOn": [
+        "S06",
+        "S09"
+      ],
+      "humanInputs": [
+        "H02"
+      ],
+      "files": [
+        "services/api/src/modules/auth/",
+        "services/api/src/adapters/wechat-login.ts",
+        "tests/integration/auth.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/03-architecture.md",
+          "headingPrefix": "3."
+        },
+        {
+          "path": "docs/04-data-api.md",
+          "headingPrefix": "3."
+        }
+      ],
+      "steps": [
+        "code只后端交换；加密OpenID、HMAC索引，不保存session_key",
+        "签发2小时随机业务令牌，仅存hash；每请求查user/session有效性",
+        "真实微信异常映射；dev替身完全隔离；登录同意动作记录真实版本"
+      ],
+      "checks": [
+        "伪造openid无效；过期/撤销/删除用户均401；跨用户不能获取资料",
+        "code重复与超时不无条件重放；真实接口联调待H02单列"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/auth.test.ts"
+      ],
+      "operationIds": [
+        "createSession",
+        "getMe"
+      ],
+      "evidence": "docs/evidence/S10.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S11",
+      "title": "称呼与字体校验纯函数",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P03",
+      "dependsOn": [
+        "S03",
+        "S02"
+      ],
+      "humanInputs": [],
+      "files": [
+        "packages/domain/src/name.ts",
+        "packages/domain/src/graphemes.ts",
+        "tests/unit/name.test.ts",
+        "tests/fixtures/names.json"
+      ],
+      "readSections": [
+        {
+          "path": "docs/01-product.md",
+          "headingPrefix": "3."
+        },
+        {
+          "path": "docs/16-media-implementation.md",
+          "headingPrefix": "2."
+        }
+      ],
+      "steps": [
+        "NFC/trim与字素计数，16上限，禁控制/不可见/emoji",
+        "前后端共享小程序兼容分段逻辑；不依赖设备Intl.Segmenter",
+        "绑定字体cmap与真实排版测量；不截断、无静默字体fallback"
+      ],
+      "checks": [
+        "同一夹具在Node和编译后mini纯函数结果一致",
+        "16/17字素、分解字符、缺字、宽字符覆盖"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/unit/name.test.ts"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S11.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S12",
+      "title": "改名、内容审核与额度",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P03",
+      "dependsOn": [
+        "S10",
+        "S11",
+        "S09"
+      ],
+      "humanInputs": [
+        "H02"
+      ],
+      "files": [
+        "services/api/src/modules/users/",
+        "services/api/src/adapters/moderation.ts",
+        "services/api/src/modules/quota/",
+        "tests/integration/name-update.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "3."
+        },
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "4."
+        }
+      ],
+      "steps": [
+        "事务外调用真实内容审核，摘要绑定规范化文本/身份；失败closed",
+        "事务内锁用户核对expectedNameVersion、同名不计次、每日3次成功",
+        "保存同意与幂等；并发过期审核结果不能覆盖新名字"
+      ],
+      "checks": [
+        "并发改名仅正确版本成功；超时不持有用户行锁",
+        "同名重放不增额；23:59/00:00北京时间边界正确"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/name-update.test.ts"
+      ],
+      "operationIds": [
+        "updateName"
+      ],
+      "evidence": "docs/evidence/S12.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S13",
+      "title": "私有存储与签名接口",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P04",
+      "dependsOn": [
+        "S06"
+      ],
+      "humanInputs": [
+        "H02"
+      ],
+      "files": [
+        "packages/infrastructure/src/object-storage.ts",
+        "packages/domain/src/storage.ts",
+        "tests/integration/storage.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/03-architecture.md",
+          "headingPrefix": "7."
+        },
+        {
+          "path": "docs/17-deployment-runbook.md",
+          "headingPrefix": "1."
+        }
+      ],
+      "steps": [
+        "在仅服务端可引用的packages/infrastructure实现upload/head/signRead/delete；API与Worker注入同一实现，本地测试有独立替身",
+        "私有桶与受限key，不接收用户任意URL；签名≤300秒",
+        "幂等删除不存在对象视为成功，签名不入日志"
+      ],
+      "checks": [
+        "错路径/越界key拒绝；过期/匿名读取拒绝",
+        "真实测试桶上传/读取/删除证据与mock分开"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/storage.test.ts"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S13.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S14",
+      "title": "管理员身份、Cookie 与 CSRF",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P05",
+      "dependsOn": [
+        "S09",
+        "S06"
+      ],
+      "humanInputs": [],
+      "files": [
+        "services/api/src/modules/admin/auth/",
+        "services/api/src/cli/admin.ts",
+        "tests/integration/admin-auth.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "8."
+        },
+        {
+          "path": "docs/17-deployment-runbook.md",
+          "headingPrefix": "3."
+        }
+      ],
+      "steps": [
+        "Argon2id+加密TOTP；运维CLI交互初始化，无公开注册",
+        "随机session只存hash；按docs/13精确派生CSRF、同源Origin校验与Cookie属性",
+        "实现角色、失效、注销、登录限流、TOTP重放保护与密钥轮换"
+      ],
+      "checks": [
+        "刷新session返回可验证CSRF；跨会话/跨Origin/缺CSRF写入均拒绝",
+        "撤销立即失效；旧TOTP重放失败；密码/seed不出DTO/日志"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/admin-auth.test.ts"
+      ],
+      "operationIds": [
+        "adminLogin",
+        "adminSession",
+        "adminLogout"
+      ],
+      "evidence": "docs/evidence/S14.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S15",
+      "title": "素材上传、列表与技术检查",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P05",
+      "dependsOn": [
+        "S13",
+        "S14",
+        "S09",
+        "S03"
+      ],
+      "humanInputs": [
+        "H03"
+      ],
+      "files": [
+        "services/api/src/modules/admin/assets/",
+        "services/render-worker/src/asset-check/",
+        "packages/infrastructure/src/job-lease.ts",
+        "tests/integration/assets.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/04-data-api.md",
+          "headingPrefix": "6."
+        },
+        {
+          "path": "docs/05-assets-operations.md",
+          "headingPrefix": "1."
+        },
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "3."
+        }
+      ],
+      "steps": [
+        "受限upload-ticket→complete→持久asset_check_job，下载/ffprobe在事务外",
+        "实现列表/详情、类型大小hash校验，字体/音轨/视频规格；错误状态可见",
+        "发布者确认权利证据/期限；不可覆盖已有对象；撤回进入清理协议",
+        "先实现共享短事务领取/续租/过期判定工具，S17/S20复用；schema属于S09，不能复制另一套锁规则"
+      ],
+      "checks": [
+        "扩展名伪装/错hash/超大/未上传complete失败",
+        "检查租约恢复、重复complete同一任务；未批准资产不能发布"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/assets.test.ts"
+      ],
+      "operationIds": [
+        "adminUploadTicket",
+        "adminCompleteAsset",
+        "adminGetAsset",
+        "adminListAssets",
+        "adminApproveAsset",
+        "adminWithdrawAsset"
+      ],
+      "evidence": "docs/evidence/S15.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S16",
+      "title": "活动草稿、封面与收听配置",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P05",
+      "dependsOn": [
+        "S14",
+        "S08",
+        "S15"
+      ],
+      "humanInputs": [],
+      "files": [
+        "services/api/src/modules/admin/campaigns/",
+        "tests/integration/campaign-draft.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/04-data-api.md",
+          "headingPrefix": "6."
+        },
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "7."
+        }
+      ],
+      "steps": [
+        "实现活动列表/创建/详情/乐观版本更新",
+        "封面与分享图引用有效cover资产；收听仅search_hint/mini_program",
+        "草稿修改不改公开release；校验日期与retain/rights关系"
+      ],
+      "checks": [
+        "expectedVersion冲突409；越权角色拒绝",
+        "无效封面/链接字段拒绝；过期活动不可普通恢复"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/campaign-draft.test.ts"
+      ],
+      "operationIds": [
+        "adminListCampaigns",
+        "adminCreateCampaign",
+        "adminGetCampaign",
+        "adminUpdateCampaign"
+      ],
+      "evidence": "docs/evidence/S16.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S17",
+      "title": "款式母版、预览与批准",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P04",
+      "dependsOn": [
+        "S15",
+        "S16",
+        "S03"
+      ],
+      "humanInputs": [
+        "H03"
+      ],
+      "files": [
+        "services/api/src/modules/admin/variants/",
+        "services/render-worker/src/prepare/",
+        "tests/media/prepare.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/16-media-implementation.md",
+          "headingPrefix": "1."
+        },
+        {
+          "path": "docs/16-media-implementation.md",
+          "headingPrefix": "4."
+        },
+        {
+          "path": "docs/05-assets-operations.md",
+          "headingPrefix": "3."
+        }
+      ],
+      "steps": [
+        "建立不可变variant，引用音频/背景/字体；prepare独立持久任务",
+        "预制固定母版、short/long/latin三个PNG合成预览；复用已验证媒体模块",
+        "实现列表/详情/预览短签名；批准绑定configHash和三份预览"
+      ],
+      "checks": [
+        "输入素材撤回/过期中止；丢租约旧prepare不得写回",
+        "三种预览真实完整；修改版不能复用旧批准"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/media/prepare.test.ts"
+      ],
+      "operationIds": [
+        "adminCreateVariant",
+        "adminListVariants",
+        "adminGetVariant",
+        "adminPrepareVariant",
+        "adminGetVariantPreview",
+        "adminApproveVariant"
+      ],
+      "evidence": "docs/evidence/S17.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S18",
+      "title": "发布快照、概率与公开查询",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P05",
+      "dependsOn": [
+        "S17",
+        "S16"
+      ],
+      "humanInputs": [],
+      "files": [
+        "services/api/src/modules/admin/publish/",
+        "services/api/src/modules/campaigns/",
+        "packages/domain/src/weighted.ts",
+        "tests/integration/publish.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "7."
+        },
+        {
+          "path": "docs/04-data-api.md",
+          "headingPrefix": "6."
+        }
+      ],
+      "steps": [
+        "检查素材/权利/预览/封面/收听证据完整，发布rules/variants/display快照",
+        "公开接口只读发布版本与weight/totalWeight，用户版另算canDraw/myInvitationId",
+        "实现暂停/恢复/撤回与时钟权限，不依赖定时任务已更新状态"
+      ],
+      "checks": [
+        "权重边界与总和精确；抽样测试只是辅助，不把统计检验作为唯一正确性",
+        "并发发布/撤回/草稿编辑不泄漏未批准内容；公开DTO无私人字段"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/publish.test.ts"
+      ],
+      "operationIds": [
+        "adminPublishCampaign",
+        "adminPauseCampaign",
+        "adminResumeCampaign",
+        "adminWithdrawCampaign",
+        "listCampaigns",
+        "getCampaign",
+        "listPublicCampaigns",
+        "getPublicCampaign"
+      ],
+      "evidence": "docs/evidence/S18.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S19",
+      "title": "一次抽取与幂等事务",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P06",
+      "dependsOn": [
+        "S12",
+        "S18",
+        "S09"
+      ],
+      "humanInputs": [],
+      "files": [
+        "services/api/src/modules/invitations/draw.ts",
+        "services/api/src/modules/idempotency/",
+        "tests/integration/draw-race.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/04-data-api.md",
+          "headingPrefix": "7."
+        },
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "3."
+        },
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "5."
+        }
+      ],
+      "steps": [
+        "按统一锁序锁用户/活动，核对称呼版本、时间、权利、容量",
+        "唯一邀请函+快照revision+job+pending+幂等+事件原子提交",
+        "服务端安全随机加权；响应丢失后复用同资源，不接受客户端variant"
+      ],
+      "checks": [
+        "同用户50并发/多幂等键最终只有一个variant/invitation/job",
+        "同键不同body409；并发改名/暂停/撤回不能越过权限；容量拒绝不消费抽取"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/draw-race.test.ts"
+      ],
+      "operationIds": [
+        "drawInvitation"
+      ],
+      "evidence": "docs/evidence/S19.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S20",
+      "title": "Worker 租约与最终写回",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P07",
+      "dependsOn": [
+        "S19",
+        "S13",
+        "S03"
+      ],
+      "humanInputs": [],
+      "files": [
+        "services/render-worker/src/claim.ts",
+        "services/render-worker/src/heartbeat.ts",
+        "services/render-worker/src/render.ts",
+        "services/render-worker/src/finalize.ts",
+        "services/render-worker/src/main.ts",
+        "tests/integration/worker-race.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/16-media-implementation.md",
+          "headingPrefix": "5."
+        },
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "4."
+        },
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "6."
+        }
+      ],
+      "steps": [
+        "短事务SKIP LOCKED领取，generation/epoch/租约单调校验；每15秒续60秒租约",
+        "使用固定render_spec生成、校验、上传，120秒硬超时",
+        "最终按父对象锁序核验权利/删除/pending/租约，原子切换与结算",
+        "旧epoch孤儿对象计划清理；关机停止领任务，丢租约停止子进程"
+      ],
+      "checks": [
+        "旧Worker晚到/租约过期但未再领取/上传后崩溃/重复完成测试",
+        "删除/撤回事务屏障竞争后不能复活数据；自动最多3次，attempt对象不覆盖"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/worker-race.test.ts"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S20.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S21",
+      "title": "作品读取、列表与状态恢复",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P08",
+      "dependsOn": [
+        "S20"
+      ],
+      "humanInputs": [],
+      "files": [
+        "services/api/src/modules/invitations/read.ts",
+        "tests/integration/invitation-read.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "7."
+        },
+        {
+          "path": "docs/04-data-api.md",
+          "headingPrefix": "2."
+        }
+      ],
+      "steps": [
+        "实现本人列表、current/pending DTO与capabilities",
+        "分页created_at+id；查询不暴露他人资源是否存在",
+        "按统一权限矩阵生成canSave/canShare/canRename/canRetry"
+      ],
+      "checks": [
+        "另一用户ID查询404；失败新版仍保留旧ready",
+        "公开分享DTO与私有详情不混用；终态pollAfterMs正确"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/invitation-read.test.ts"
+      ],
+      "operationIds": [
+        "listMyInvitations",
+        "getInvitation"
+      ],
+      "evidence": "docs/evidence/S21.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S22",
+      "title": "改名新版、取消与受控重试",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P09",
+      "dependsOn": [
+        "S21",
+        "S12"
+      ],
+      "humanInputs": [],
+      "files": [
+        "services/api/src/modules/invitations/revisions.ts",
+        "services/api/src/modules/invitations/retry.ts",
+        "tests/integration/revisions.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "4."
+        },
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "6."
+        }
+      ],
+      "steps": [
+        "改名只新revision、原variant不变；同名返回现有不占额度",
+        "原子预留每日2次，成功结算/失败释放；跨日期按预留日结算",
+        "失败pending可取消；预算内retry与运营新generation明确区分",
+        "合法文件过期重建同revision，不重新抽取"
+      ],
+      "checks": [
+        "并发新版只能一个在途；取消/重试不同body幂等冲突",
+        "午夜失败释放原日期预留；新版本成功撤旧分享、旧文件7天清理"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/revisions.test.ts"
+      ],
+      "operationIds": [
+        "createNameRevision",
+        "cancelFailedPending",
+        "retryInvitation"
+      ],
+      "evidence": "docs/evidence/S22.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S23",
+      "title": "媒体与只读分享 API",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P10",
+      "dependsOn": [
+        "S22",
+        "S13"
+      ],
+      "humanInputs": [],
+      "files": [
+        "services/api/src/modules/invitations/media.ts",
+        "services/api/src/modules/shares/",
+        "tests/integration/shares.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/03-architecture.md",
+          "headingPrefix": "7."
+        },
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "5."
+        }
+      ],
+      "steps": [
+        "media只签当前ready且授权有效revision，purpose严格枚举",
+        "显式consent后创建绑定revision分享，HMAC按key版本派生，DB只存hash",
+        "同一邀请函唯一未撤销链接，过期/新建/幂等重放规则固定；关闭不复活",
+        "匿名分享只返回受限DTO，日志/分析不带token/URL"
+      ],
+      "checks": [
+        "同键重放同路径、旧创建键不能复活撤销；改名成功旧链接无效",
+        "token猜测/越权/过期/撤回拒绝，签名最长300秒"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/shares.test.ts"
+      ],
+      "operationIds": [
+        "getMedia",
+        "createShare",
+        "revokeShares",
+        "getSharedInvitation"
+      ],
+      "evidence": "docs/evidence/S23.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S24",
+      "title": "原生端请求、会话与导航",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P08",
+      "dependsOn": [
+        "S21",
+        "S02"
+      ],
+      "humanInputs": [],
+      "files": [
+        "apps/miniprogram/src/services/api.ts",
+        "apps/miniprogram/src/services/session.ts",
+        "apps/miniprogram/src/app.ts",
+        "apps/miniprogram/src/pages/entry/",
+        "tests/unit/mp-session.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/09-wechat-development.md",
+          "headingPrefix": "3."
+        },
+        {
+          "path": "docs/09-wechat-development.md",
+          "headingPrefix": "4."
+        }
+      ],
+      "steps": [
+        "wx.request封装、单飞登录与明确用户同意后身份建立",
+        "401最多重登一次，写请求复用原幂等键；一次性code不复用",
+        "tabBar只discover/me，外链share冷启动不强制填名，onHide/onUnload清资源"
+      ],
+      "checks": [
+        "同时多个请求只有一次登录；连续401停止；未知路由安全返回",
+        "无个人同意时可看公开活动/分享；不能静默上传称呼"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/unit/mp-session.test.ts",
+        "pnpm build:mp:staging"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S24.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S25",
+      "title": "集中隐私授权组件",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P10",
+      "dependsOn": [
+        "S24",
+        "S04"
+      ],
+      "humanInputs": [
+        "H06"
+      ],
+      "files": [
+        "apps/miniprogram/src/services/privacy.ts",
+        "apps/miniprogram/src/components/privacy-dialog/",
+        "tests/unit/mp-privacy.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/09-wechat-development.md",
+          "headingPrefix": "5."
+        },
+        {
+          "path": "docs/18-human-operations.md",
+          "headingPrefix": "H06"
+        }
+      ],
+      "steps": [
+        "全局一次onNeedPrivacyAuthorization监听，挂载到当前可见Page的组件消费队列",
+        "官方agreePrivacyAuthorization按钮事件后resolve同意；拒绝或页面销毁resolve拒绝",
+        "区分业务同意/微信隐私/scope与系统权限；拒绝不反复强弹",
+        "prod/staging能力检测和未知错误提示，不能本地布尔伪造授权"
+      ],
+      "checks": [
+        "并发保存只一个弹窗；离页不悬挂Promise；拒绝仍可播放",
+        "H06初次/已同意/拒绝/系统拒绝真实验证"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/unit/mp-privacy.test.ts",
+        "pnpm build:mp:staging"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S25.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S26",
+      "title": "发现、称呼与活动页",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P08",
+      "dependsOn": [
+        "S24",
+        "S12",
+        "S18",
+        "S11"
+      ],
+      "humanInputs": [],
+      "files": [
+        "apps/miniprogram/src/pages/discover/",
+        "apps/miniprogram/src/pages/name/",
+        "apps/miniprogram/src/pages/campaign/",
+        "tests/unit/mp-campaign.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/02-experience.md"
+        },
+        {
+          "path": "docs/01-product.md",
+          "headingPrefix": "3."
+        },
+        {
+          "path": "docs/01-product.md",
+          "headingPrefix": "4."
+        }
+      ],
+      "steps": [
+        "按原图先判断称呼再进入本人活动；公开浏览入口保留",
+        "输入显示字素计数/错误/协议版本，提交走expectedNameVersion",
+        "活动展示全部已发布款式/概率/期限；已有邀请进入原结果",
+        "点拆开先请求再播放结果动画，未收到服务端结果不能前端决定款式"
+      ],
+      "checks": [
+        "空/错误/活动暂停/已抽取/双击每项有真实状态",
+        "姓名规范化一致；无重抽/分享换机会/无效按钮"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/unit/mp-campaign.test.ts",
+        "pnpm build:mp:staging"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S26.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S27",
+      "title": "邀请函页与播放器状态",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P08",
+      "dependsOn": [
+        "S26",
+        "S21",
+        "S22"
+      ],
+      "humanInputs": [],
+      "files": [
+        "apps/miniprogram/src/pages/invitation/",
+        "apps/miniprogram/src/components/invitation-player/",
+        "tests/unit/mp-invitation.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/09-wechat-development.md",
+          "headingPrefix": "3."
+        },
+        {
+          "path": "docs/09-wechat-development.md",
+          "headingPrefix": "6."
+        },
+        {
+          "path": "docs/04-data-api.md",
+          "headingPrefix": "2."
+        }
+      ],
+      "steps": [
+        "current/pending分开显示，进度只展示真实阶段",
+        "2→3→5秒轮询、onHide停止、onShow刷新、卸载丢弃晚到响应",
+        "原生video单音轨、用户点播、离页暂停；改名按钮使用capabilities",
+        "失败重试/取消pending/过期和无栈返回有出口"
+      ],
+      "checks": [
+        "背景切回不重复计时器/播放音频；晚响应不覆盖新页面",
+        "改名失败仍可看旧片；结果姓名与revision一致"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/unit/mp-invitation.test.ts",
+        "pnpm build:mp:staging"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S27.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S28",
+      "title": "删除、撤回与到期清理",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P12",
+      "dependsOn": [
+        "S23",
+        "S20"
+      ],
+      "humanInputs": [],
+      "files": [
+        "services/api/src/modules/users/delete.ts",
+        "services/api/src/modules/invitations/delete.ts",
+        "services/render-worker/src/cleanup/",
+        "tests/integration/deletion-race.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "9."
+        },
+        {
+          "path": "docs/17-deployment-runbook.md",
+          "headingPrefix": "4."
+        }
+      ],
+      "steps": [
+        "删除事务立即封禁访问/撤销session与share，202清理中",
+        "单作品留最小抽取占位；全账号清可关联身份，重新注册不保证防重抽",
+        "cleanup持久领取后事务外删对象，重试/宽限/备份删除清单",
+        "按保留期清姓名/版本/日志；旧Worker孤儿对象不复活"
+      ],
+      "checks": [
+        "并发render finalize与删除/权利撤回的两种先后均正确",
+        "存储暂时失败可恢复，恢复备份后重放删除清单；删除占位不允许重抽"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/deletion-race.test.ts"
+      ],
+      "operationIds": [
+        "deleteAccount",
+        "deleteInvitation"
+      ],
+      "evidence": "docs/evidence/S28.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S29",
+      "title": "下载与相册保存",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P10",
+      "dependsOn": [
+        "S27",
+        "S25",
+        "S23"
+      ],
+      "humanInputs": [
+        "H04"
+      ],
+      "files": [
+        "apps/miniprogram/src/services/media-save.ts",
+        "apps/miniprogram/src/pages/invitation/",
+        "tests/unit/mp-save.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/09-wechat-development.md",
+          "headingPrefix": "6."
+        },
+        {
+          "path": "docs/18-human-operations.md",
+          "headingPrefix": "H04"
+        }
+      ],
+      "steps": [
+        "用户点击→隐私→当前revision媒体签名→downloadFile→相册保存",
+        "HTTP200/文件路径/格式检查，单下载任务且签名仅刷新一次",
+        "区分拒绝、系统权限、空间不足、离页取消、网络失败",
+        "仅save成功发事件；清理本次临时文件，不删别的文件"
+      ],
+      "checks": [
+        "403回调不算成功；双击不并发；离页不setData旧页面",
+        "iOS/Android相册实际文件含姓名/音轨"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/unit/mp-save.test.ts",
+        "pnpm build:mp:staging"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S29.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S30",
+      "title": "好友分享与匿名进入",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P10",
+      "dependsOn": [
+        "S27",
+        "S23"
+      ],
+      "humanInputs": [],
+      "files": [
+        "apps/miniprogram/src/services/share.ts",
+        "apps/miniprogram/src/pages/share/",
+        "apps/miniprogram/src/pages/invitation/",
+        "tests/unit/mp-share.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/09-wechat-development.md",
+          "headingPrefix": "7."
+        },
+        {
+          "path": "docs/01-product.md",
+          "headingPrefix": "6."
+        }
+      ],
+      "steps": [
+        "先明确开启再准备sharePath，native按钮只返回已准备卡片",
+        "通用封面不带姓名；未开启私有分享禁菜单或仅分享活动",
+        "匿名访问只读；制作自己的只携带campaignId",
+        "关闭/改名后清理旧sharePath，错误/过期/无栈返回正确"
+      ],
+      "checks": [
+        "A→B可看，B制作不继承A名字/所有权；撤销后新访问失败",
+        "分享点击只记intent，不宣称发送成功"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/unit/mp-share.test.ts",
+        "pnpm build:mp:staging"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S30.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S31",
+      "title": "我的、法律说明与删除入口",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P12",
+      "dependsOn": [
+        "S28",
+        "S26"
+      ],
+      "humanInputs": [
+        "H06"
+      ],
+      "files": [
+        "apps/miniprogram/src/pages/me/",
+        "apps/miniprogram/src/pages/legal/",
+        "apps/miniprogram/src/legal/",
+        "tests/unit/mp-me.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/18-human-operations.md",
+          "headingPrefix": "H06"
+        },
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "9."
+        }
+      ],
+      "steps": [
+        "列本人作品、改名、用户隐私保护指引与反馈/联系入口",
+        "按H06实际资料填写说明，不保留假主体与占位联系方式",
+        "删除二次明确确认，202显示清理中并清身份缓存；作品删除保留已抽状态"
+      ],
+      "checks": [
+        "拒绝删除不发请求；完成操作不自动重建个人账号",
+        "页面/后台声明的字段与期限一致"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/unit/mp-me.test.ts",
+        "pnpm build:mp:staging"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S31.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S32",
+      "title": "管理端登录与权限外壳",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P11",
+      "dependsOn": [
+        "S14"
+      ],
+      "humanInputs": [],
+      "files": [
+        "apps/admin/src/api/",
+        "apps/admin/src/pages/Login.vue",
+        "apps/admin/src/router/",
+        "tests/unit/admin-session.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "8."
+        },
+        {
+          "path": "docs/17-deployment-runbook.md",
+          "headingPrefix": "3."
+        }
+      ],
+      "steps": [
+        "同源相对路径请求，Cookie不进localStorage，CSRF内存读取",
+        "刷新会话重新取得派生CSRF；注销清状态",
+        "角色菜单与后端权限一致，登录错误统一，不显示内部seed"
+      ],
+      "checks": [
+        "会话过期返回登录且不循环；跨站/无CSRF后端拒绝",
+        "浏览器检查Cookie属性/路径，页面不泄漏令牌"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/unit/admin-session.test.ts",
+        "pnpm build:admin"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S32.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S33",
+      "title": "后台素材、活动与发布表单",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P11",
+      "dependsOn": [
+        "S32",
+        "S18"
+      ],
+      "humanInputs": [
+        "H05"
+      ],
+      "files": [
+        "apps/admin/src/pages/Assets.vue",
+        "apps/admin/src/pages/Campaign.vue",
+        "apps/admin/src/pages/Variants.vue",
+        "tests/unit/admin-content.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/05-assets-operations.md",
+          "headingPrefix": "4."
+        },
+        {
+          "path": "docs/04-data-api.md",
+          "headingPrefix": "6."
+        }
+      ],
+      "steps": [
+        "素材列表选择/上传/检查/权利审批，错误状态可见",
+        "活动封面/分享图/收听/期限表单；variant不可变，修改建新版本",
+        "查看三种预览并确认configHash，发布显示概率/期限/检查清单",
+        "暂停/恢复/撤回要求原因与真实确认，映射接口错误"
+      ],
+      "checks": [
+        "无需改代码能上线下一活动；无字段缺口/空按钮",
+        "越权角色不可发布；乐观冲突刷新不覆盖新草稿"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/unit/admin-content.test.ts",
+        "pnpm build:admin"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S33.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S34",
+      "title": "任务看板与去敏统计",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P11",
+      "dependsOn": [
+        "S32",
+        "S20",
+        "S18"
+      ],
+      "humanInputs": [],
+      "files": [
+        "services/api/src/modules/admin/jobs/",
+        "services/api/src/modules/events/",
+        "apps/admin/src/pages/Jobs.vue",
+        "apps/admin/src/pages/Metrics.vue",
+        "tests/integration/metrics.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/01-product.md",
+          "headingPrefix": "7."
+        },
+        {
+          "path": "docs/13-database-implementation.md",
+          "headingPrefix": "4."
+        }
+      ],
+      "steps": [
+        "实现render/prepare/asset_check任务分页、错误分类与受控重试",
+        "采集事件白名单与去重，关键计数使用服务端事实",
+        "按明确日期区间计算指标，分享访问不用伪造匿名独立人数",
+        "不提供任意用户数据导出；操作审计不含姓名/token"
+      ],
+      "checks": [
+        "重复事件不增关键计数；客户端伪造ready不能抬升成功率",
+        "运营重试新generation有审计且受权限/额度约束"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/metrics.test.ts",
+        "pnpm build:admin"
+      ],
+      "operationIds": [
+        "adminListJobs",
+        "adminRetryJob",
+        "adminGetMetrics",
+        "ingestEvents"
+      ],
+      "evidence": "docs/evidence/S34.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S35",
+      "title": "端到端与负向回归",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P13",
+      "dependsOn": [
+        "S28",
+        "S29",
+        "S30",
+        "S31",
+        "S33",
+        "S34"
+      ],
+      "humanInputs": [
+        "H07"
+      ],
+      "files": [
+        "tests/integration/e2e.test.ts",
+        "tests/media/e2e.test.ts",
+        "docs/evidence/G3.md"
+      ],
+      "readSections": [
+        {
+          "path": "docs/13-database-implementation.md"
+        },
+        {
+          "path": "docs/16-media-implementation.md",
+          "headingPrefix": "5."
+        }
+      ],
+      "steps": [
+        "把acceptance-cases计划场景逐项映射到真实测试或真机记录",
+        "真实DB+Worker+短测试素材走完整后台发布→抽取→合成→改名→分享→删除",
+        "故障注入网络不确定/进程崩溃/撤回/额度/重复请求",
+        "整理G2/G3证据，无证据场景不能标通过"
+      ],
+      "checks": [
+        "跨模块业务断言全部通过，不只HTTP200",
+        "真实正式素材/真机另列H证据；计划场景没有静默跳过"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/e2e.test.ts",
+        "pnpm test:file -- tests/media/e2e.test.ts",
+        "pnpm test:integration",
+        "pnpm test:media"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S35.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S36",
+      "title": "容器与可追溯部署",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P13",
+      "dependsOn": [
+        "S35"
+      ],
+      "humanInputs": [
+        "H02"
+      ],
+      "files": [
+        "infra/compose.prod.yml",
+        "infra/Caddyfile",
+        "infra/Dockerfile.api",
+        "infra/Dockerfile.worker",
+        "scripts/deploy.mjs",
+        "scripts/health-check.mjs",
+        ".github/workflows/ci.yml",
+        "tests/integration/deploy-config.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/17-deployment-runbook.md",
+          "headingPrefix": "1."
+        },
+        {
+          "path": "docs/17-deployment-runbook.md",
+          "headingPrefix": "2."
+        },
+        {
+          "path": "docs/17-deployment-runbook.md",
+          "headingPrefix": "3."
+        }
+      ],
+      "steps": [
+        "按docs/17构建固定digest镜像与最小权限容器，API/Worker独立资源",
+        "实现preflight/check/apply显式环境与manifest校验，管理静态同源",
+        "迁移向后兼容，Worker优雅停止，健康兼顾外部API与队列",
+        "CI覆盖契约/类型/DB/媒体/打包，不自动生产发布"
+      ],
+      "checks": [
+        "缺配置/占位/mock/错digest失败且不打印secret",
+        "staging实际部署完整链路，prod只在G4与已有授权时操作"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/deploy-config.test.ts",
+        "pnpm deploy:check -- --env staging"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S36.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S37",
+      "title": "备份与隔离恢复演练",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P13",
+      "dependsOn": [
+        "S36",
+        "S28"
+      ],
+      "humanInputs": [],
+      "files": [
+        "scripts/backup.mjs",
+        "scripts/restore-check.mjs",
+        "tests/integration/restore.test.ts",
+        "docs/evidence/restore.md"
+      ],
+      "readSections": [
+        {
+          "path": "docs/17-deployment-runbook.md",
+          "headingPrefix": "4."
+        }
+      ],
+      "steps": [
+        "实现一致性备份、hash/期限/权限与manifest",
+        "仅隔离库恢复；独立删除清单重放后才开放读取",
+        "记录实际耗时/丢失窗口；模板不能充当演练",
+        "禁自动DROP生产库与危险默认目标"
+      ],
+      "checks": [
+        "模拟备份损坏/缺删除清单必须失败",
+        "隔离恢复后被删用户/撤回作品不可访问，合法邀请仍可读"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/restore.test.ts"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S37.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S38",
+      "title": "监控与运营巡检",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P13",
+      "dependsOn": [
+        "S36",
+        "S34"
+      ],
+      "humanInputs": [],
+      "files": [
+        "scripts/health-check.mjs",
+        "infra/monitoring/",
+        "docs/operations.md",
+        "tests/integration/health.test.ts"
+      ],
+      "readSections": [
+        {
+          "path": "docs/03-architecture.md",
+          "headingPrefix": "9."
+        },
+        {
+          "path": "docs/17-deployment-runbook.md",
+          "headingPrefix": "6."
+        }
+      ],
+      "steps": [
+        "监控API live/ready、Worker心跳、最老排队、磁盘、存储、备份年龄",
+        "阈值与去敏告警结构固定；通知渠道由负责人配置",
+        "失败处理指向具体runbook，不能全部自动重试"
+      ],
+      "checks": [
+        "Worker停而API正常仍告警；备份超期/清理失败可定位",
+        "确认责任人能读取告警，发送外部通知依已有授权"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/health.test.ts",
+        "pnpm health:check -- --env staging"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S38.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S39",
+      "title": "容量、预算与限流",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P13",
+      "dependsOn": [
+        "S36",
+        "S38"
+      ],
+      "humanInputs": [],
+      "files": [
+        "scripts/load-test.mjs",
+        "tests/integration/capacity.test.ts",
+        "docs/evidence/capacity.md"
+      ],
+      "readSections": [
+        {
+          "path": "docs/16-media-implementation.md",
+          "headingPrefix": "6."
+        },
+        {
+          "path": "docs/03-architecture.md",
+          "headingPrefix": "9."
+        }
+      ],
+      "steps": [
+        "在staging固定模板/资源测到达率、服务时间、内存、CPU和bytes",
+        "验证队列达到阈值拒绝新抽取但保留原结果",
+        "按存储/下载/计算实际计价输入计算预算；不给未经查询的价格",
+        "选择首发并发和阈值并记录样本/限制"
+      ],
+      "checks": [
+        "压力下唯一抽取/租约正确，CPU/内存不无限增长",
+        "超预算暂停策略真实有效；输出容量与费用假设非保证"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/integration/capacity.test.ts",
+        "pnpm capacity:check -- --env staging"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S39.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S40",
+      "title": "正式环境真机问题修复",
+      "executor": "G",
+      "reviewer": "D",
+      "phase": "P14",
+      "dependsOn": [
+        "S35",
+        "S36",
+        "S39",
+        "S04"
+      ],
+      "humanInputs": [
+        "H04",
+        "H06",
+        "H07",
+        "H08"
+      ],
+      "files": [
+        "apps/miniprogram/src/",
+        "tests/unit/mp-regression.test.ts",
+        "docs/evidence/G4-devices.md"
+      ],
+      "readSections": [
+        {
+          "path": "docs/09-wechat-development.md",
+          "headingPrefix": "9."
+        },
+        {
+          "path": "docs/18-human-operations.md",
+          "headingPrefix": "H07"
+        },
+        {
+          "path": "docs/18-human-operations.md",
+          "headingPrefix": "H08"
+        }
+      ],
+      "steps": [
+        "H用prod候选跑H07完整流程与异常矩阵，记录buildId",
+        "只修实际复现问题，每个修复加对应可自动化回归",
+        "验证下载域名/Range/签名/隐私/二人分享/更新管理器",
+        "无真实设备不能以截图模拟通过"
+      ],
+      "checks": [
+        "两系统和第二微信真实通过；关闭调试豁免",
+        "修复后重构建并重新标记候选，旧证据不冒充新包"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm test:file -- tests/unit/mp-regression.test.ts",
+        "pnpm build:mp:staging"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S40.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S41",
+      "title": "提审包与材料检查",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P14",
+      "dependsOn": [
+        "S40",
+        "S37"
+      ],
+      "humanInputs": [
+        "H01",
+        "H02",
+        "H03",
+        "H05",
+        "H06",
+        "H08"
+      ],
+      "files": [
+        "scripts/check-release.mjs",
+        "docs/evidence/release-candidate.md",
+        "docs/evidence/G4.md"
+      ],
+      "readSections": [
+        {
+          "path": "docs/10-wechat-release.md",
+          "headingPrefix": "4."
+        },
+        {
+          "path": "docs/10-wechat-release.md",
+          "headingPrefix": "5."
+        },
+        {
+          "path": "docs/18-human-operations.md",
+          "headingPrefix": "H09"
+        }
+      ],
+      "steps": [
+        "扫描prod包秘密/mock/diagnostics/占位、页面注册与体积",
+        "检查H01–H09实际状态、素材/隐私/演示活动/联系信息",
+        "生成SHA/buildId/迁移/digest/契约/素材manifest与提审备注",
+        "记录平台审核前置，未满足明确BLOCKED"
+      ],
+      "checks": [
+        "pnpm build:mp:prod；pnpm release:check实际通过",
+        "C验收G4后H提交；包与后端行为/材料完全一致"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck",
+        "pnpm build:mp:prod",
+        "pnpm release:check"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S41.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S42",
+      "title": "审核、发布与普通用户验收",
+      "executor": "H",
+      "reviewer": "C",
+      "phase": "P15",
+      "dependsOn": [
+        "S41"
+      ],
+      "humanInputs": [
+        "H09",
+        "H10"
+      ],
+      "files": [
+        "docs/evidence/platform-release.md",
+        "docs/evidence/G5.md"
+      ],
+      "readSections": [
+        {
+          "path": "docs/10-wechat-release.md",
+          "headingPrefix": "7."
+        },
+        {
+          "path": "docs/10-wechat-release.md",
+          "headingPrefix": "8."
+        },
+        {
+          "path": "docs/18-human-operations.md",
+          "headingPrefix": "H10"
+        }
+      ],
+      "steps": [
+        "H在公众平台提交批准候选，G协助按原文定位驳回",
+        "修代码后重上传重验，不在审核中隐蔽切换业务",
+        "有发布授权后发布审核通过版本，记录时间与回退能力",
+        "普通非体验成员完成生成/保存/分享，记录实际线上版本"
+      ],
+      "checks": [
+        "平台状态与正式普通用户证据齐全才标上线",
+        "问题按docs/10暂停新增生成/回滚/修复，不静默更改概率或权限"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S42.md",
+      "initialStatus": "TODO"
+    },
+    {
+      "id": "S43",
+      "title": "运行交接与后续恢复入口",
+      "executor": "D",
+      "reviewer": "G",
+      "phase": "P15",
+      "dependsOn": [
+        "S42",
+        "S38"
+      ],
+      "humanInputs": [
+        "H10"
+      ],
+      "files": [
+        "docs/operations.md",
+        "docs/evidence/launch-followup.md",
+        "NEXT_SESSION.md",
+        "IMPLEMENTATION_STATUS.md"
+      ],
+      "readSections": [
+        {
+          "path": "docs/10-wechat-release.md",
+          "headingPrefix": "9."
+        },
+        {
+          "path": "docs/12-troubleshooting.md"
+        }
+      ],
+      "steps": [
+        "H执行发布后15分钟/1小时/24小时检查；D整理实际结果",
+        "交接账号权限位置、告警责任人、暂停/撤回/重试/删除/恢复步骤",
+        "将真实故障根因与修复记录到排障手册，不把预防建议当经历",
+        "列剩余问题和下一任务，状态只按真实证据更新"
+      ],
+      "checks": [
+        "运行记录/值班/备份/删除清理均有实际证据",
+        "新接手者能按入口定位版本和任务，秘密不入git"
+      ],
+      "commands": [
+        "node scripts/check-plan.mjs",
+        "pnpm typecheck"
+      ],
+      "operationIds": [],
+      "evidence": "docs/evidence/S43.md",
+      "initialStatus": "TODO"
+    }
+  ]
+}

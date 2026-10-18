@@ -1,0 +1,787 @@
+{
+  "version": "1.2",
+  "implementationStatus": "not_started",
+  "cases": [
+    {
+      "id": "A01",
+      "title": "首次称呼",
+      "taskId": "P08",
+      "verificationKind": "device",
+      "given": "新微信用户且无称呼",
+      "when": "普通入口启动并提交合法称呼",
+      "then": [
+        "进入项目页",
+        "不要求手机号或头像",
+        "服务端有称呼版本"
+      ],
+      "operationIds": [
+        "createSession",
+        "updateName"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S21",
+        "S24",
+        "S26",
+        "S27"
+      ]
+    },
+    {
+      "id": "A02",
+      "title": "跨端恢复",
+      "taskId": "P08",
+      "verificationKind": "device",
+      "given": "同微信身份已有ready邀请函",
+      "when": "换设备进入同活动",
+      "then": [
+        "同一个invitationId",
+        "不重复抽取",
+        "称呼取服务端"
+      ],
+      "operationIds": [
+        "getMe",
+        "getCampaign",
+        "getInvitation"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S21",
+        "S24",
+        "S26",
+        "S27"
+      ]
+    },
+    {
+      "id": "A03",
+      "title": "名称校验",
+      "taskId": "P03",
+      "verificationKind": "integration",
+      "given": "字体和审核适配器已配置",
+      "when": "依次提交空白、17字素、emoji、控制字符、缺字和审核拒绝样本",
+      "then": [
+        "无无效称呼写入",
+        "错误码与原因匹配",
+        "失败不消耗成功额度"
+      ],
+      "operationIds": [
+        "updateName"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S10",
+        "S11",
+        "S12"
+      ]
+    },
+    {
+      "id": "A04",
+      "title": "100并发抽取",
+      "taskId": "P06",
+      "verificationKind": "integration",
+      "given": "同用户同活动未抽取",
+      "when": "100并发POST，混合同键和不同键",
+      "then": [
+        "invitations计数为1",
+        "首版revision计数为1",
+        "render_jobs计数为1",
+        "所有成功响应invitationId和variant一致"
+      ],
+      "operationIds": [
+        "drawInvitation"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S19"
+      ]
+    },
+    {
+      "id": "A05",
+      "title": "响应丢失",
+      "taskId": "P06",
+      "verificationKind": "integration",
+      "given": "首次抽取已提交但响应丢弃",
+      "when": "同键重放并再换键请求同一活动",
+      "then": [
+        "返回原结果",
+        "没有第二次抽取",
+        "同键不同body返回409"
+      ],
+      "operationIds": [
+        "drawInvitation"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S19"
+      ]
+    },
+    {
+      "id": "A06",
+      "title": "关闭后恢复",
+      "taskId": "P08",
+      "verificationKind": "device",
+      "given": "queued邀请函",
+      "when": "退出微信等待后重新打开",
+      "then": [
+        "服务端任务继续",
+        "恢复相同邀请函",
+        "页面不持续后台轮询"
+      ],
+      "operationIds": [
+        "getInvitation"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S21",
+        "S24",
+        "S26",
+        "S27"
+      ]
+    },
+    {
+      "id": "A07",
+      "title": "事务回滚",
+      "taskId": "P06",
+      "verificationKind": "integration",
+      "given": "在创建job前注入数据库错误",
+      "when": "提交抽取后重试",
+      "then": [
+        "第一次没有部分业务记录",
+        "第二次可正常创建一次",
+        "无孤立invitation"
+      ],
+      "operationIds": [
+        "drawInvitation"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S19"
+      ]
+    },
+    {
+      "id": "A08",
+      "title": "Worker失联",
+      "taskId": "P07",
+      "verificationKind": "integration",
+      "given": "running任务和受控对象存储",
+      "when": "停止Worker、过期租约后由另一Worker完成，旧Worker尝试回写",
+      "then": [
+        "旧epoch写回失败",
+        "current只指向有效结果",
+        "孤立对象可清理"
+      ],
+      "operationIds": [
+        "getInvitation"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S20"
+      ]
+    },
+    {
+      "id": "A09",
+      "title": "真实成片",
+      "taskId": "P04",
+      "verificationKind": "media",
+      "given": "批准的测试母版和短/长称呼",
+      "when": "渲染并用外部播放器打开",
+      "then": [
+        "姓名烧录",
+        "单条正确音轨",
+        "720x1280且时长正确",
+        "首尾可解码"
+      ],
+      "operationIds": [],
+      "status": "planned",
+      "executionTaskIds": [
+        "S03",
+        "S04",
+        "S13",
+        "S17"
+      ]
+    },
+    {
+      "id": "A10",
+      "title": "改名竞态",
+      "taskId": "P09",
+      "verificationKind": "integration",
+      "given": "有ready旧版本",
+      "when": "改名后重复请求，注入失败，再恢复完成",
+      "then": [
+        "variant不变",
+        "处理中最多一版",
+        "失败保留旧current",
+        "成功撤销旧分享且只记一次额度"
+      ],
+      "operationIds": [
+        "updateName",
+        "createNameRevision",
+        "cancelFailedPending"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S22"
+      ]
+    },
+    {
+      "id": "A11",
+      "title": "播放生命周期",
+      "taskId": "P08",
+      "verificationKind": "device",
+      "given": "正在播放视频",
+      "when": "重复切后台/返回/跳页",
+      "then": [
+        "没有重复音轨",
+        "onHide停止",
+        "onShow不会新建多个timer"
+      ],
+      "operationIds": [
+        "getMedia"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S21",
+        "S24",
+        "S26",
+        "S27"
+      ]
+    },
+    {
+      "id": "A12",
+      "title": "保存授权和过期",
+      "taskId": "P10",
+      "verificationKind": "device",
+      "given": "ready作品、可过期签名",
+      "when": "允许/拒绝小程序授权、系统授权，模拟403和低空间",
+      "then": [
+        "仅相册成功计save_success",
+        "403不被当视频",
+        "签名只自动刷新一次",
+        "拒绝不循环弹窗"
+      ],
+      "operationIds": [
+        "getMedia",
+        "ingestEvents"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S23",
+        "S25",
+        "S29",
+        "S30"
+      ]
+    },
+    {
+      "id": "A13",
+      "title": "双用户分享",
+      "taskId": "P10",
+      "verificationKind": "device",
+      "given": "用户A明确开启分享",
+      "when": "B打开分享再制作自己的邀请",
+      "then": [
+        "B能看允许的称呼",
+        "B无权修改A",
+        "B生成自己的记录"
+      ],
+      "operationIds": [
+        "createShare",
+        "getSharedInvitation",
+        "drawInvitation"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S23",
+        "S25",
+        "S29",
+        "S30"
+      ]
+    },
+    {
+      "id": "A14",
+      "title": "越权和撤销",
+      "taskId": "P10",
+      "verificationKind": "integration",
+      "given": "用户A作品和用户B令牌",
+      "when": "B请求A媒体，伪造/撤销share token后访问",
+      "then": [
+        "私有资源统一404",
+        "分享失效不返回姓名/媒体",
+        "重放旧创建键不能复活分享"
+      ],
+      "operationIds": [
+        "getInvitation",
+        "getMedia",
+        "revokeShares",
+        "getSharedInvitation",
+        "createShare"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S23",
+        "S25",
+        "S29",
+        "S30"
+      ]
+    },
+    {
+      "id": "A15",
+      "title": "状态权限",
+      "taskId": "P12",
+      "verificationKind": "integration",
+      "given": "活动覆盖live/paused/ended/withdrawn与权利到期",
+      "when": "执行抽取、重生成、签名、分享和Worker完成",
+      "then": [
+        "严格遵守数据库手册矩阵",
+        "过期/下架无签名",
+        "queued任务按状态处理"
+      ],
+      "operationIds": [
+        "drawInvitation",
+        "createNameRevision",
+        "getMedia",
+        "createShare"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S28",
+        "S31"
+      ]
+    },
+    {
+      "id": "A16",
+      "title": "删除竞态",
+      "taskId": "P12",
+      "verificationKind": "integration",
+      "given": "正在合成的作品",
+      "when": "删除作品/账户同时让Worker完成",
+      "then": [
+        "不能复活内容",
+        "立即撤销访问",
+        "cleanup任务持久化",
+        "作品删除不恢复抽取次数"
+      ],
+      "operationIds": [
+        "deleteInvitation",
+        "deleteAccount"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S28",
+        "S31"
+      ]
+    },
+    {
+      "id": "A17",
+      "title": "版本和素材撤回",
+      "taskId": "P05",
+      "verificationKind": "integration",
+      "given": "已发布活动与历史邀请",
+      "when": "新发布权重，尝试覆盖资产，再撤回单款资产",
+      "then": [
+        "历史款式和快照不变",
+        "不能直接级联删除",
+        "撤回只封禁受影响作品"
+      ],
+      "operationIds": [
+        "adminPublishCampaign",
+        "adminWithdrawAsset"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S14",
+        "S15",
+        "S16",
+        "S18"
+      ]
+    },
+    {
+      "id": "A18",
+      "title": "概率和发布",
+      "taskId": "P06",
+      "verificationKind": "unit",
+      "given": "权重1/2/3与随机边界注入",
+      "when": "枚举累计区间边界；对坏配置运行校验",
+      "then": [
+        "每个随机整数准确落区间",
+        "空池/非整数/负权重拒绝",
+        "不要求短样本次数相等"
+      ],
+      "operationIds": [
+        "drawInvitation",
+        "adminPublishCampaign"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S19"
+      ]
+    },
+    {
+      "id": "A19",
+      "title": "指标与隐私",
+      "taskId": "P11",
+      "verificationKind": "integration",
+      "given": "准备客户端与服务端事件",
+      "when": "重复事件，点击分享但无人访问，再真实访问",
+      "then": [
+        "分享意图与访问分开",
+        "eventId去重",
+        "日志无姓名/OpenID/token"
+      ],
+      "operationIds": [
+        "ingestEvents",
+        "adminGetMetrics"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S32",
+        "S33",
+        "S34"
+      ]
+    },
+    {
+      "id": "A20",
+      "title": "兼容与弱网",
+      "taskId": "P13",
+      "verificationKind": "device",
+      "given": "至少iOS和Android中低端机",
+      "when": "弱网/断网/重连/低存储完整主流程",
+      "then": [
+        "状态可恢复",
+        "无白屏和无穷loading",
+        "后端抽取不重复"
+      ],
+      "operationIds": [
+        "drawInvitation",
+        "getInvitation",
+        "getMedia"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S35",
+        "S36",
+        "S37",
+        "S38",
+        "S39"
+      ]
+    },
+    {
+      "id": "W01",
+      "title": "工程导入与包检查",
+      "taskId": "P01",
+      "verificationKind": "build",
+      "given": "干净检出",
+      "when": "构建并导入apps/miniprogram",
+      "then": [
+        "dist结构完整",
+        "无Node/DOM裸导入",
+        "无秘密或原始音视频"
+      ],
+      "operationIds": [],
+      "status": "planned",
+      "executionTaskIds": [
+        "S01",
+        "S05",
+        "S06"
+      ]
+    },
+    {
+      "id": "W02",
+      "title": "生产构建防误配",
+      "taskId": "P13",
+      "verificationKind": "build",
+      "given": "测试域名或mock开关存在",
+      "when": "执行prod构建",
+      "then": [
+        "非零退出",
+        "指出问题配置",
+        "不生成可上传候选包"
+      ],
+      "operationIds": [],
+      "status": "planned",
+      "executionTaskIds": [
+        "S35",
+        "S36",
+        "S37",
+        "S38",
+        "S39"
+      ]
+    },
+    {
+      "id": "W03",
+      "title": "审核发布环境一致",
+      "taskId": "P14",
+      "verificationKind": "platform",
+      "given": "已构建prod候选包",
+      "when": "从体验版到正式版核对buildId和API_ORIGIN",
+      "then": [
+        "同一候选包",
+        "不因envVersion切换后端",
+        "后端兼容上一版本"
+      ],
+      "operationIds": [],
+      "status": "planned",
+      "executionTaskIds": [
+        "S40",
+        "S41"
+      ]
+    },
+    {
+      "id": "W04",
+      "title": "管理员鉴权",
+      "taskId": "P11",
+      "verificationKind": "integration",
+      "given": "editor/publisher/普通用户/过期会话",
+      "when": "尝试发布、无CSRF、错TOTP和普通用户token访问",
+      "then": [
+        "按角色拒绝",
+        "Origin与CSRF校验",
+        "失败登录限流",
+        "无密码或TOTP泄露"
+      ],
+      "operationIds": [
+        "adminLogin",
+        "adminPublishCampaign",
+        "adminRetryJob"
+      ],
+      "status": "planned",
+      "executionTaskIds": [
+        "S32",
+        "S33",
+        "S34"
+      ]
+    },
+    {
+      "id": "W05",
+      "title": "发布材料与可体验性",
+      "taskId": "P14",
+      "verificationKind": "platform",
+      "given": "账号和候选包",
+      "when": "按审核说明用空白用户操作",
+      "then": [
+        "活动可见",
+        "各入口真实可用",
+        "备案/类目/隐私状态已核实",
+        "材料无占位符"
+      ],
+      "operationIds": [],
+      "status": "planned",
+      "executionTaskIds": [
+        "S40",
+        "S41"
+      ]
+    },
+    {
+      "id": "W06",
+      "title": "正式用户与运行交接",
+      "taskId": "P15",
+      "verificationKind": "platform",
+      "given": "审核通过且已授权发布",
+      "when": "用非体验成员走主流程并观察运行",
+      "then": [
+        "正式入口可达",
+        "真实MP4可保存",
+        "监控和成本记录",
+        "回滚负责人明确"
+      ],
+      "operationIds": [],
+      "status": "planned",
+      "executionTaskIds": [
+        "S42",
+        "S43"
+      ]
+    },
+    {
+      "id": "B01",
+      "title": "管理CSRF刷新与轮换",
+      "taskId": "P05",
+      "executionTaskIds": [
+        "S14"
+      ],
+      "verificationKind": "integration",
+      "given": "有效管理会话",
+      "when": "刷新页面/更换会话/轮换CSRF密钥",
+      "then": [
+        "同会话可重建令牌",
+        "跨会话和跨Origin写请求被拒绝",
+        "撤销会话不能用旧CSRF继续"
+      ],
+      "operationIds": [
+        "adminLogin",
+        "adminSession",
+        "adminLogout"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "B02",
+      "title": "后台素材款式与发布字段",
+      "taskId": "P05",
+      "executionTaskIds": [
+        "S18"
+      ],
+      "verificationKind": "integration",
+      "given": "素材检查通过的草稿",
+      "when": "从后台选封面/收听/款式并发布",
+      "then": [
+        "无需猜ID或改代码",
+        "预览hash与批准一致",
+        "公开概率及封面来自release"
+      ],
+      "operationIds": [
+        "adminListAssets",
+        "adminListVariants",
+        "adminGetVariantPreview",
+        "adminPublishCampaign"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "B03",
+      "title": "过期租约不能复活",
+      "taskId": "P07",
+      "executionTaskIds": [
+        "S20"
+      ],
+      "verificationKind": "integration",
+      "given": "Worker持有已到期租约且尚未被另一个领取",
+      "when": "续租或完成写回",
+      "then": [
+        "行数为0",
+        "不成为正式对象",
+        "产物进入孤儿清理"
+      ],
+      "operationIds": [],
+      "status": "planned"
+    },
+    {
+      "id": "B04",
+      "title": "跨生成周期对象不覆盖",
+      "taskId": "P07",
+      "executionTaskIds": [
+        "S20"
+      ],
+      "verificationKind": "integration",
+      "given": "旧周期失败后运营授权新周期",
+      "when": "旧Worker上传晚到",
+      "then": [
+        "generation/epoch不同key",
+        "新正式对象不被覆盖",
+        "旧对象可清理"
+      ],
+      "operationIds": [],
+      "status": "planned"
+    },
+    {
+      "id": "B05",
+      "title": "文字墨迹与子进程取消",
+      "taskId": "P04",
+      "executionTaskIds": [
+        "S03"
+      ],
+      "verificationKind": "integration",
+      "given": "宽长姓名和描边且启动前signal已aborted",
+      "when": "排版或开始合成",
+      "then": [
+        "边界含描边padding",
+        "不截字或默默fallback",
+        "已取消不启动进程"
+      ],
+      "operationIds": [],
+      "status": "planned"
+    },
+    {
+      "id": "B06",
+      "title": "隐私授权队列生命周期",
+      "taskId": "P10",
+      "executionTaskIds": [
+        "S25"
+      ],
+      "verificationKind": "integration",
+      "given": "多个保存动作等待授权",
+      "when": "拒绝或离开页面",
+      "then": [
+        "仅一个可见弹窗",
+        "所有resolve完成不悬挂",
+        "播放仍可用"
+      ],
+      "operationIds": [],
+      "status": "planned"
+    },
+    {
+      "id": "B07",
+      "title": "发布候选环境不漂移",
+      "taskId": "P14",
+      "executionTaskIds": [
+        "S41"
+      ],
+      "verificationKind": "integration",
+      "given": "同一个prod构建",
+      "when": "分别作为体验/审核/正式版本运行",
+      "then": [
+        "API_ORIGIN不随envVersion改变",
+        "prod无mock/diagnostics",
+        "同一buildId可追溯"
+      ],
+      "operationIds": [],
+      "status": "planned"
+    },
+    {
+      "id": "B08",
+      "title": "恢复不能复活已删除数据",
+      "taskId": "P13",
+      "executionTaskIds": [
+        "S37"
+      ],
+      "verificationKind": "integration",
+      "given": "备份后发生删除/撤回",
+      "when": "恢复到隔离库",
+      "then": [
+        "重放独立删除清单",
+        "未重放前禁止对外开放",
+        "删除对象仍不可访问"
+      ],
+      "operationIds": [],
+      "status": "planned"
+    },
+    {
+      "id": "B09",
+      "title": "审核范围收窄须全链路",
+      "taskId": "P14",
+      "executionTaskIds": [
+        "S41"
+      ],
+      "verificationKind": "integration",
+      "given": "若实际类目要求调整公开分享",
+      "when": "改变产品分享范围并重新提审",
+      "then": [
+        "不仅隐藏按钮",
+        "旧token/API访问受一致控制",
+        "材料/回归与新代码一致"
+      ],
+      "operationIds": [
+        "revokeShares",
+        "getSharedInvitation"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "B10",
+      "title": "跨午夜额度结算",
+      "taskId": "P09",
+      "executionTaskIds": [
+        "S22"
+      ],
+      "verificationKind": "integration",
+      "given": "23:59预留姓名合成额度",
+      "when": "00:01成功或失败",
+      "then": [
+        "结算或释放原预留日",
+        "新一天计数不被错误增减",
+        "重复完成只结算一次"
+      ],
+      "operationIds": [
+        "createNameRevision"
+      ],
+      "status": "planned"
+    }
+  ]
+}
