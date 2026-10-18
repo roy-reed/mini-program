@@ -24,7 +24,7 @@ Windows 开发者工具运行在 Windows；后端可以在 WSL／Docker。先确
 4. 选择记录过的基础库，先看编译／Console／Network；必要时清缓存重编译。不要修改 dist 修问题，应修改 src 后重建。
 5. 配置真机 HTTPS 测试环境，执行 `pnpm build:mp:staging`，重新编译并扫码预览；记录真机型号、系统、微信、基础库和 buildId。
 
-基础库兼容基线先设 3.0.0 或团队实际支持的更高稳定版本，P00／P01 写入台账；不是“永远使用工具当前默认”。调用前用能力检测处理差异，不支持核心隐私能力时明确引导升级微信，不能静默跳过同意。
+基础库兼容基线固定为 3.0.0；若实际所需能力要求更高版本，在S01显式提高并重新记录，S00／S01 写入台账；不是“永远使用工具当前默认”。调用前用能力检测处理差异，不支持核心隐私能力时明确引导升级微信，不能静默跳过同意。
 
 ## 3. 原生页面与导航
 
@@ -62,7 +62,7 @@ Windows 开发者工具运行在 Windows；后端可以在 WSL／Docker。先确
 
 首版不申请头像、手机号、位置、通讯录或麦克风。使用普通 input 输入称呼，避免因为误用附带额外能力的组件扩大权限范围。拒绝个人信息处理时仍可查看隐私／关于说明和已被明确分享的公开内容。
 
-建议集中实现 privacy service：查询适用的隐私设置、按需触发官方授权流程；自定义弹窗时全局只管理一个授权队列，用户通过官方同意按钮操作后才完成对应 resolve。不得用本地布尔值冒充微信授权，也不得在 onLoad 中反复弹窗。官方类型说明 `getPrivacySetting` 和 `requirePrivacyAuthorize` 是辅助能力，具体流程依据实际接口选择，不要求无差别调用。
+固定实现集中 privacy service：App只注册一次onNeedPrivacyAuthorization，把待处理resolve交给当前可见页面的privacy-dialog。组件使用官方agreePrivacyAuthorization按钮；bindagreeprivacyauthorization回调后才resolve同意；拒绝、卸载或没有可见页面均resolve拒绝并清队列；多个请求合并显示但逐个完成回调。查询适用隐私设置并在用户保存动作中按需requirePrivacyAuthorize，不依赖“什么都不写就一定自动弹窗”的假设。不得用本地布尔值冒充微信授权，也不得在 onLoad 中反复弹窗。官方类型说明 `getPrivacySetting` 和 `requirePrivacyAuthorize` 是辅助能力，具体流程依据实际接口选择，不要求无差别调用。
 
 称呼校验与服务端使用同一规范化规则和字素簇算法；不假设所有小程序 JS 环境都有 Intl.Segmenter。前端用于及时提示，后端审核和字体检测才是最终依据。
 

@@ -1,6 +1,6 @@
 # 工程实施蓝图
 
-本节将技术路线收敛为一种实现，减少模型自行选型。以下命令是 **P01 必须实现的仓库脚本契约**，当前方案仓库尚无这些脚本；先完成 P01，再执行后续开发命令。
+本节将技术路线收敛为一种实现，减少模型自行选型。应用命令由 S01 及所属后续卡建立，当前尚无应用工程；只有 `node scripts/check-plan.mjs`、`node scripts/prepare-task.mjs` 和标准契约检查脚本实际存在。不要在S01建立返回假成功的未来命令。
 
 ## 1. 固定技术与模块边界
 
@@ -15,7 +15,10 @@ Node 与 Fastify 的支持范围已查阅官方资料；安装时仍执行 engin
 | `@invite/api` | `services/api` | `src/server.ts` 启动；`src/app.ts` 创建可测试 Fastify 实例 |
 | `@invite/worker` | `services/render-worker` | `src/main.ts` 常驻任务轮询；退出时不再领新任务 |
 | `@invite/contracts` | `packages/contracts` | 从 OpenAPI 生成 DTO；统一状态与错误；不依赖服务端 SDK |
+| `@invite/infrastructure` | `packages/infrastructure` | 仅Node服务端共享pg连接、存储适配与租约工具；禁止被小程序引用 |
 | `@invite/domain` | `packages/domain` | 纯业务函数：规范化、权重区间、状态转移；不依赖微信／数据库 |
+
+服务端TS构建采用NodeNext模块与解析，源文件相对import写.js扩展名，编译到dist后由Node运行；开发可用tsx，但生产不依赖它即时转译。小程序仍为CommonJS，不能混用tsconfig。
 
 服务端数据库用 `pg`＋参数化 SQL；迁移文件为有序 SQL，用迁移 runner 管理版本与校验和。不在首版混用多个 ORM。测试建议 Vitest＋Fastify inject＋独立 PostgreSQL 测试库；FFmpeg 集成测试使用短测试母版。
 
@@ -40,7 +43,7 @@ Node 与 Fastify 的支持范围已查阅官方资料；安装时仍执行 engin
 | `infra/compose.prod.yml` | API、Worker、反向代理；生产数据库外置，不默认暴露 5432 |
 | `tests/` | contracts、integration、media、fixtures；真机结果另放 `docs/evidence/` |
 
-首版小程序禁止运行时引入服务端 workspace 包。`packages/contracts` 只以 `import type` 进入小程序；必须运行的纯函数由构建脚本生成到 `src/generated/` 或采用已验证的小程序兼容打包，不能在 dist 保留 `@invite/*`／`node:*` 裸导入。P01 默认采用前者并校验输出。
+首版小程序禁止运行时引入服务端 workspace 包。`packages/contracts` 只以 `import type` 进入小程序；必须运行的纯函数由构建脚本生成到 `src/generated/` 或采用已验证的小程序兼容打包，不能在 dist 保留 `@invite/*`／`node:*` 裸导入。S01 默认采用前者并校验输出。
 
 ## 3. 小程序构建的唯一约定
 
@@ -60,7 +63,7 @@ Node 与 Fastify 的支持范围已查阅官方资料；安装时仍执行 engin
 
 | 命令 | 实现内容 | 成功输出／失败规则 |
 | --- | --- | --- |
-| `pnpm install --frozen-lockfile` | 按锁文件安装 | 锁不一致必须失败；首次 P01 先生成锁文件 |
+| `pnpm install --frozen-lockfile` | 按锁文件安装 | 锁不一致必须失败；首次 S01 先生成锁文件 |
 | `pnpm contract:check` | 验证 OpenAPI、配置 schema、样例、内部引用和场景覆盖 | 错误文件／路径可定位，退出码非零 |
 | `pnpm db:migrate` | 对显式 DATABASE_URL 应用未执行迁移 | 显示迁移版本；生产需环境确认并先备份 |
 | `pnpm db:seed` | 加载开发样例和测试标识 | 非 dev／test 必须拒绝；不能填真实乐队素材 |
@@ -74,17 +77,18 @@ Node 与 Fastify 的支持范围已查阅官方资料；安装时仍执行 engin
 | `pnpm test:unit` / `pnpm test:integration` / `pnpm test:media` | 对应领域／数据库／FFmpeg测试 | 使用隔离数据，失败保留去敏日志 |
 | `pnpm check` | contract、typecheck、lint、unit | 不包含需要真人的真机和审核，不能以此宣称已上线 |
 
-P01 可只建立能真实执行的空工程检查；尚无业务测试时明确显示“0 business tests”，不能写永远 exit 0 的假测试脚本。对应任务创建测试后纳入 CI。
+S01 可只建立能真实执行的空工程检查；尚无业务测试时明确显示“0 business tests”，不能写永远 exit 0 的假测试脚本。对应任务创建测试后纳入 CI。
 
 ## 5. 配置与适配器
 
 | 配置 | 暴露范围 | 规则 |
 | --- | --- | --- |
 | AppID、API_ORIGIN、APP_ENV、BUILD_ID | 小程序包可见 | AppID 不是密钥；环境由构建固定，不能只依据 envVersion 自动跳测试后端 |
-| WX_APP_SECRET、会话密钥、OpenID 加密／HMAC密钥 | API | 由部署平台注入；禁止进浏览器、日志和 git |
+| WX_APP_SECRET、OpenID 加密版本密钥／HMAC密钥 | API | 由部署平台注入；禁止进浏览器、日志和 git |
 | DATABASE_URL | API／Worker | 分环境，生产最小权限；迁移单独账号 |
 | COS_REGION／BUCKET、访问角色 | API／Worker | 优先工作负载身份；小程序只拿短期读取地址 |
 | SHARE_HMAC_KEY_VERSION 与版本密钥 | API | 密钥轮换保留旧版本至对应链接到期或显式全量撤销 |
+| ADMIN_CSRF_KEY_VERSION与版本密钥、ADMIN_TOTP_ENCRYPTION_KEY | API | 独立于分享/OpenID密钥；CSRF可重建派生、TOTP加密，规则见docs/13 |
 | RENDER_CONCURRENCY、LEASE_SECONDS、JOB_TIMEOUT_SECONDS | Worker | 初始 1、60、120，按压测调整；不随用户请求传入 |
 
 `WechatIdentity.exchange(code)`、`TextModeration.check(text, userContext)`、`ObjectStore.signRead/upload/head/delete`、`Renderer.render(spec)` 采用接口注入。mock 只能在测试／dev 显式开启，生产启动检测到 mock 直接失败。
@@ -96,3 +100,19 @@ API 和 Worker 分镜像：Worker 固定 FFmpeg、ffprobe、字体和文字绘�
 CI 顺序为契约检查→类型与 lint→领域测试→临时 PostgreSQL 集成测试→短素材媒体测试→构建小程序和服务镜像。CI 默认不提交微信审核或发布生产；上传能力可在后续显式接入 `miniprogram-ci`，密钥和可信 IP 由管理员配置，不能借此绕过权限。
 
 产物清单包括 git SHA、依赖锁摘要、镜像摘要、API契约版本、数据库版本、MP 构建环境、AppID与 buildId。每个发布包可追溯到确定源代码。
+
+## 7. 精确步骤所需补充脚本
+
+| 命令 | 建立于 | 必须行为 |
+| --- | --- | --- |
+| `pnpm test:file -- tests/...test.ts` | S01 | Node runner去掉可选--后验证文件存在，调用Vitest指定文件；无用例/文件不存在失败；不执行全部无关测试 |
+| `pnpm contracts:generate` | S02 | 从唯一OpenAPI生成纯类型，可重复且零差异 |
+| `pnpm media:spike` | S03 | 输出测试MP4/封面/ffprobe与耗时报告；缺授权字体明确失败 |
+| `pnpm build:admin` | S32 | 构建Vue静态管理端 |
+| `pnpm deploy:check` / `pnpm deploy:apply` | S36 | 显式环境/manifest，按docs/17检查或变更，不猜生产 |
+| `pnpm backup:run` / `pnpm restore:verify` | S37 | 一致性备份、默认仅隔离恢复、删除清单重放 |
+| `pnpm health:check` | S38 | API/Worker/队列/备份/清理检查，失败非零 |
+| `pnpm capacity:check` | S39 | staging真实负载及容量报告，不打生产 |
+| `pnpm release:check` | S41 | prod包/配置/材料manifest检查，未满足门槛失败 |
+
+S01创建根test:file runner与Vitest依赖；各卡实现自己的测试文件后才执行。脚本的env参数必须使用白名单。dev/staging的diagnostics页面在prod构建中连同测试数据完全排除。

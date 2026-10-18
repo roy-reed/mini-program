@@ -11,10 +11,12 @@
 | 003 | invitations、invitation_revisions、render_jobs | 用户／活动唯一；revision_no唯一；任务revision唯一；指针外键后置添加 |
 | 004 | share_links、idempotency_records、daily_usage | token哈希唯一；幂等复合唯一；额度scope_key非空、计数非负 |
 | 005 | admin_users、admin_sessions、admin_audit、event_log | 管理身份独立；密码哈希、TOTP加密、会话哈希、角色CHECK |
-| 006 | asset_prepare_jobs、cleanup_jobs、job_attempts | 母版预制与用户渲染分表；持久清理；按周期记录每次执行 |
+| 006 | asset_check_jobs、asset_prepare_jobs、cleanup_jobs、job_attempts | 母版预制与用户渲染分表；持久清理；按周期记录每次执行 |
 | 007 | 必要索引、约束、维护操作 | 任务扫描、用户作品分页、分享查询、到期扫描；干净库与升级库均测试 |
 
-`privacy_consents` 记录系统收到的用户动作与版本，不声称单凭前端传值就能证明微信平台授权；平台隐私 API 仍按实际流程处理。`asset_prepare_jobs` 以 variant_id 唯一，状态、租约与渲染任务类似，但没有用户姓名。`cleanup_jobs` 记录 entity_type、entity_id、due_at、status、attempts、lease与去敏错误，用于可重试删除；不把待删除姓名作为payload保存。
+`privacy_consents` 记录系统收到的用户动作与版本，不声称单凭前端传值就能证明微信平台授权；平台隐私 API 仍按实际流程处理。`asset_check_jobs` 以 asset_id 唯一，上传complete后持久排队，状态/租约与prepare相同；技术检查在事务外执行。`asset_prepare_jobs` 以 variant_id 唯一，状态、租约与渲染任务类似，但没有用户姓名。`cleanup_jobs` 记录 entity_type、entity_id、due_at、status、attempts、lease与去敏错误，用于可重试删除；不把待删除姓名作为payload保存。
+
+活动草稿增加cover_asset_id、share_cover_asset_id、listen_destination；release.display_snapshot保存对外文案/封面/收听配置及验证引用。公开读取以发布快照为准，暂停/撤回/权利上限使用实时活动控制。variant保存固定预览对象与configHash，批准必须一致。
 
 `job_attempts` 以 `(job_kind, job_id, generation, attempt_no)` 唯一，记录 lease_epoch、开始／结束、错误类别和输出对象引用，不含姓名。重试周期重置 attempts 时历史仍可审计。
 
@@ -53,17 +55,17 @@
 | 分享创建／关闭 | 核验owner和ready版本、创建／撤销share记录、幂等结果 | 不在事务内下载视频 |
 | 删除／撤回 | 状态禁止访问、撤销session/share（适用时）、任务取消标记、持久cleanup计划 | 实际文件删除、CDN清理与备份轮换 |
 
-首次抽取不消耗“改名重生成额度”。同名更新直接返回当前结果；不预留额度。重试在同一revision／生成周期内复用额度预留；失败到终态释放预留，运营授权重启时重新按规则预留或记录运营豁免，不能重复计数。
+首次抽取不消耗“改名重生成额度”。同名更新直接返回当前结果；不预留额度。daily_usage按Asia/Shanghai本地日期、非空scope_key定义；revision保存预留的local_date/scope，跨午夜完成或失败结算原预留日。首次称呼不计修改次数，同名不计；成功修改才used+1。重试在同一revision／生成周期内复用额度预留；失败到终态释放预留，运营授权重启时重新按规则预留或记录运营豁免，不能重复计数。
 
 ## 5. 幂等和响应不确定
 
 幂等检查不能只“先SELECT，没有就INSERT业务”。并发请求都可能看不到记录。使用带唯一约束的事务插入抢占幂等记录，冲突时读取已提交结果；同键不同request_hash返回409。客户端重试必须保留键，服务端资源唯一约束提供第二层保护。
 
-存储资源id和确定的响应状态，不长期保存签名URL。读取已完成资源后生成当前有效响应；原202可能变成200，但资源身份和抽取结果保持一致。分享token可按密钥版本与随机share_id重新派生，确保同键重放不产生第二个链接。关闭分享后对旧创建键重放不能复活链接，应返回 `SHARE_REVOKED`；重新开启使用新键创建新share记录。
+存储资源id和确定的响应状态，不长期保存签名URL。读取已完成资源后生成当前有效响应；原202可能变成200，但资源身份和抽取结果保持一致。分享token固定格式为`v1.<keyVersion>.<shareId>.<base64url(HMAC-SHA256(key, UTF8("invite-share:v1:"+shareId)))>`，shareId是随机UUID而非用户ID；整体令牌哈希存库，查验token hash后验证行绑定和权限。分享token可按密钥版本与随机share_id重新派生，确保同键重放不产生第二个链接。share_links增加同invitation_id且revoked_at为空的部分唯一索引；创建先在邀请函锁内复用未过期的当前版本链接，旧过期或不同版本链接先撤销再新建。过期或已撤销分享对旧创建键重放返回对应失效错误，不延长期限或产生新链接；用户明确重新开启用新键。关闭分享后对旧创建键重放不能复活链接，应返回 `SHARE_REVOKED`；重新开启使用新键创建新share记录。
 
 ## 6. Worker完成与孤立对象
 
-领取任务使用短事务与SKIP LOCKED，先更新lease_epoch／generation／attempts，再提交。完成时同时核验 task id、generation、lease_epoch和有效租约；仅task id相同不够。
+领取任务使用短事务与SKIP LOCKED，先更新lease_epoch／generation／attempts，再提交。续租和完成均要求lease_until大于数据库当前时刻，过期不能复活；完成时同时核验 task id、generation、lease_epoch和有效租约；仅task id相同不够。
 
 结果对象放 `{invitationId}/{revisionId}/{generation}-{leaseEpoch}/video.mp4`，不含称呼／OpenID。上传校验后提交引用；失败旧Worker产物不能覆盖正式对象。未被引用且超过宽限期的临时对象按任务状态确认后删除，不能仅凭年龄误删仍在运行的产物。
 
@@ -86,7 +88,9 @@
 
 首版采用独立管理员用户名＋密码＋TOTP，不使用用户微信token充当管理权限。通过运维CLI初始化／重置管理员，交互式读取秘密；没有公开注册／找回接口。密码用成熟Argon2id库并按当前建议参数配置，TOTP种子加密保存；管理员状态含active/disabled，角色为editor/publisher/admin。
 
-浏览器管理会话用随机token，数据库仅存hash；Cookie为 HttpOnly、Secure、SameSite=Lax、Path=/api/v1/admin，2小时到期。浏览器写请求校验Origin与CSRF header；登录也检查Origin／JSON类型和限流，不能以“未登录”为理由跳过登录CSRF防护。会话内保存CSRF token hash，客户端通过会话响应获取令牌；角色与启用状态每次校验。
+浏览器管理会话用随机token，数据库仅存hash；Cookie为 HttpOnly、Secure、SameSite=Lax、Path=/api/v1/admin，2小时到期。浏览器写请求校验Origin与CSRF header；登录也检查Origin／JSON类型和限流，不能以“未登录”为理由跳过登录CSRF防护。CSRF采用可重建派生：`v1.<keyVersion>.<base64url(HMAC-SHA256(key, UTF8("admin-csrf:v1:" + session.id)))>`。session.id为每次登录新建的随机UUID，只在服务端；密钥独立于登录/分享/OpenID密钥。admin_sessions保存csrf_key_version，不保存CSRF明文，也不从哈希反推令牌。GET会话重建同一令牌并设Cache-Control:no-store；写操作检查编码/长度、版本和常量时间HMAC比较。会话过期/撤销优先拒绝；角色与启用状态每次校验。
+
+生产后台固定与API同源：`PUBLIC_API_ORIGIN=https://api.<实际域名>`，后台`/admin/`，管理接口`/api/v1/admin/*`；`ADMIN_ORIGIN`必须等于该origin。只接受精确Origin；管理端不开放通配CORS。开发Vite通过本地代理保持浏览器同源，允许localhost HTTP的非Secure Cookie仅在dev，staging/prod必须HTTPS。密钥轮换保留当前会话需要的CSRF key版本最多2小时，主动轮换可全撤会话。TOTP最后接受计数器需原子更新，拒绝重放；admin_users新增last_totp_step。
 
 登录连续失败初始5次／15分钟触发限流，区分账号与来源，返回统一登录错误；日志不含密码或TOTP。库中的密码哈希和TOTP密文不出DTO。后续接OIDC可以替换adapter，需单独变更契约。
 
@@ -95,3 +99,11 @@
 删除请求立即改变可访问状态并排队清理。接口202表示已接受，不表示文件已全部删完；“我的”与支持流程需能说明正在清理。后台cleanup任务失败重试并告警，目标24小时在线清理、备份按既定轮换消退。
 
 账户完整删除时按依赖清除关联数据和可关联身份，最后删除用户；相同OpenID以后注册视作新用户。作品单独删除则只保留最小抽取占位到活动清理，姓名、媒体、share和revision内容按清理策略移除。恢复备份后重放删除清单，避免数据再次出现。
+
+## 10. 秘密与身份字段的实现定值
+
+用户与管理员session token均为32个加密安全随机字节的base64url；数据库只存SHA-256摘要，2小时绝对到期。每次登录新建session，不把wx.login code当token，也不把JWT混进当前契约。
+
+OpenID原值与TOTP种子采用AES-256-GCM，随机12字节nonce，保存keyVersion/nonce/ciphertext/tag；AAD绑定用途、appid或adminId，防止跨记录挪用。OpenID唯一索引为HMAC-SHA-256(key, appid + ":" + openid)；索引HMAC密钥和加密密钥独立。加密密钥轮换可分批重加密，索引密钥轮换必须维护窗口内重建摘要与唯一约束并验证，不能简单换环境变量使同一微信注册出第二个身份。
+
+版本密钥在受控秘密存储中按版本读取。不得把真实秘密放入schema/fixtures/回执。Argon2id用维护中的库，S14记录实际参数和验证成本；不能自己编密码算法。管理员TOTP种子只在授权初始化环节展示一次，重置会话与种子需审计。

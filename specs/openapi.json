@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "专辑邀请函微信小程序 API",
-    "version": "1.1.0",
-    "description": "实施契约；目前没有已运行服务。成功体直接返回对象，不再套data外壳。时间带时区，UUID为运行期标识；示例配置symbolic id不直接用于API。"
+    "version": "1.2.0",
+    "description": "v1.2融合实施契约，尚无运行服务。响应直接返回对象，不套data。目录与状态仅使用本仓库定义；首版无web-view。所有管理API同源Cookie+Origin/CSRF+角色鉴权。"
   },
   "servers": [
     {
@@ -1196,7 +1196,7 @@
         "tags": [
           "admin"
         ],
-        "description": "初始化管理员通过运维CLI，无公开注册。验证Origin与Content-Type、限流。Cookie HttpOnly/Secure/SameSite=Lax。",
+        "description": "用户名、密码、TOTP；检查精确Origin和JSON、限流。成功创建新随机会话，Cookie HttpOnly/Secure/SameSite=Lax/Path=/api/v1/admin；独立CSRF密钥派生令牌。",
         "responses": {
           "201": {
             "description": "已创建",
@@ -1251,7 +1251,7 @@
         "tags": [
           "admin"
         ],
-        "description": "读取管理员会话与CSRF令牌",
+        "description": "同源读取会话；csrfToken以独立密钥、csrf_key_version与随机session.id做HMAC派生，可重建而非从哈希还原；响应no-store。",
         "responses": {
           "200": {
             "description": "成功或复用已有资源",
@@ -1657,7 +1657,7 @@
         "tags": [
           "admin"
         ],
-        "description": "提交上传完成并启动媒体检查",
+        "description": "校验对象上传事实后入持久asset_check_jobs，返回202 Asset。不得在HTTP内等待ffprobe或在事务内下载媒体。",
         "responses": {
           "202": {
             "description": "已接受，后台处理中",
@@ -2005,6 +2005,71 @@
           "publisher",
           "admin"
         ]
+      },
+      "get": {
+        "operationId": "adminListVariants",
+        "summary": "查询活动的不可变款式列表",
+        "tags": [
+          "admin"
+        ],
+        "description": "查询活动的不可变款式列表",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariantList"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
       }
     },
     "/admin/variants/{id}": {
@@ -2075,7 +2140,7 @@
         "tags": [
           "admin"
         ],
-        "description": "预制款式母版",
+        "description": "同一configHash只建一项持久prepare任务，生成母版和short/long/latin三种固定测试名字预览。重放返回同任务；生产用户渲染仍走render_jobs。",
         "responses": {
           "202": {
             "description": "已接受，后台处理中",
@@ -2573,7 +2638,8 @@
               "type": "string",
               "enum": [
                 "render",
-                "prepare"
+                "prepare",
+                "asset_check"
               ]
             }
           },
@@ -2738,6 +2804,165 @@
             "schema": {
               "type": "string",
               "format": "date-time"
+            }
+          }
+        ],
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/assets": {
+      "get": {
+        "operationId": "adminListAssets",
+        "summary": "分页查询可选择素材",
+        "tags": [
+          "admin"
+        ],
+        "description": "分页查询可选择素材",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetList"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "audio",
+                "background_image",
+                "background_video",
+                "font",
+                "cover"
+              ]
+            }
+          },
+          {
+            "name": "approvalStatus",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "rejected",
+                "withdrawn"
+              ]
+            }
+          }
+        ],
+        "x-required-roles-any": [
+          "editor",
+          "publisher",
+          "admin"
+        ]
+      }
+    },
+    "/admin/variants/{id}/preview": {
+      "get": {
+        "operationId": "adminGetVariantPreview",
+        "summary": "读取母版对应固定测试名字成片",
+        "tags": [
+          "admin"
+        ],
+        "description": "读取母版对应固定测试名字成片",
+        "responses": {
+          "200": {
+            "description": "成功或复用已有资源",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariantPreview"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "去敏请求跟踪标识"
+              }
+            }
+          },
+          "default": {
+            "description": "非成功响应均使用HTTP语义与统一错误对象。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "nameCase",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "short",
+                "long",
+                "latin"
+              ]
             }
           }
         ],
@@ -3160,42 +3385,26 @@
             "$ref": "#/components/schemas/Rules"
           },
           "listenDestination": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "search_hint",
-                  "mini_program",
-                  "web_view"
-                ]
-              },
-              "platformName": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 120
-              },
-              "query": {
-                "type": "string",
-                "maxLength": 200
-              },
-              "appId": {
-                "type": "string"
-              },
-              "path": {
-                "type": "string"
-              },
-              "url": {
+            "$ref": "#/components/schemas/ListenDestination"
+          },
+          "shareCoverUrl": {
+            "anyOf": [
+              {
                 "type": "string",
                 "format": "uri"
+              },
+              {
+                "type": "null"
               }
-            },
-            "required": [
-              "type",
-              "platformName",
-              "query"
             ]
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishedVariant"
+            },
+            "minItems": 1,
+            "maxItems": 500
           }
         },
         "required": [
@@ -3209,7 +3418,9 @@
           "retainUntil",
           "coverUrl",
           "rules",
-          "listenDestination"
+          "listenDestination",
+          "shareCoverUrl",
+          "variants"
         ]
       },
       "CampaignPersonal": {
@@ -3941,6 +4152,38 @@
                 "type": "null"
               }
             ]
+          },
+          "coverAssetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "shareCoverAssetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "listenDestination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ListenDestination"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -4011,6 +4254,38 @@
               {
                 "type": "string",
                 "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "coverAssetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "shareCoverAssetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "listenDestination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ListenDestination"
               },
               {
                 "type": "null"
@@ -4111,6 +4386,38 @@
                 "type": "null"
               }
             ]
+          },
+          "coverAssetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "shareCoverAssetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "listenDestination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ListenDestination"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -4125,7 +4432,10 @@
           "endsAt",
           "rightsUntil",
           "retainUntil",
-          "currentReleaseId"
+          "currentReleaseId",
+          "coverAssetId",
+          "shareCoverAssetId",
+          "listenDestination"
         ]
       },
       "AdminCampaignList": {
@@ -4257,6 +4567,7 @@
           "technicalStatus": {
             "type": "string",
             "enum": [
+              "awaiting_upload",
               "uploaded",
               "checking",
               "valid",
@@ -4299,6 +4610,11 @@
                 "type": "null"
               }
             ]
+          },
+          "fileName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
           }
         },
         "required": [
@@ -4309,7 +4625,8 @@
           "bytes",
           "sha256",
           "rightsUntil",
-          "errorCode"
+          "errorCode",
+          "fileName"
         ]
       },
       "ApproveAssetInput": {
@@ -4346,12 +4663,14 @@
           "headline": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 100
+            "maxLength": 100,
+            "description": "只允许一个{displayName}变量；动态主文案整句画入nameBox，不写入母版。"
           },
           "subheadline": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 200
+            "maxLength": 200,
+            "description": "只允许{artistName}/{albumName}变量；固定文本预制进母版。"
           },
           "nameBox": {
             "type": "object",
@@ -4483,6 +4802,17 @@
                 "type": "null"
               }
             ]
+          },
+          "audioAssetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "backgroundAssetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "layout": {
+            "$ref": "#/components/schemas/LayoutInput"
           }
         },
         "required": [
@@ -4492,7 +4822,10 @@
           "configHash",
           "status",
           "approvalStatus",
-          "baseVideoAssetId"
+          "baseVideoAssetId",
+          "audioAssetId",
+          "backgroundAssetId",
+          "layout"
         ]
       },
       "VariantApprovalInput": {
@@ -4546,13 +4879,26 @@
             },
             "minItems": 1,
             "maxItems": 500
+          },
+          "listenEvidenceRef": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
           "expectedVersion",
           "rules",
-          "variants"
-        ]
+          "variants",
+          "listenEvidenceRef"
+        ],
+        "description": "mini_program 收听入口需发布者提供真机验证证据引用；search_hint 可为null。封面/分享图、时限、素材与预览必须就绪。"
       },
       "PublishResult": {
         "type": "object",
@@ -4644,7 +4990,8 @@
             "type": "string",
             "enum": [
               "render",
-              "prepare"
+              "prepare",
+              "asset_check"
             ]
           },
           "entityId": {
@@ -4733,7 +5080,8 @@
             "type": "string",
             "enum": [
               "render",
-              "prepare"
+              "prepare",
+              "asset_check"
             ]
           },
           "reason": {
@@ -4779,10 +5127,6 @@
             "type": "integer",
             "minimum": 0
           },
-          "shareVisitUsers": {
-            "type": "integer",
-            "minimum": 0
-          },
           "renderSuccessRatio": {
             "anyOf": [
               {
@@ -4810,6 +5154,11 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 120
+          },
+          "shareVisitCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "成功读取合法分享内容的请求次数，含重复读取和未识别的所有者访问；不是去重人数。"
           }
         },
         "required": [
@@ -4820,9 +5169,206 @@
           "readyUsers",
           "saveSuccessCount",
           "shareIntentCount",
-          "shareVisitUsers",
+          "shareVisitCount",
           "renderSuccessRatio",
           "renderP95Seconds",
+          "requestId"
+        ]
+      },
+      "ListenDestination": {
+        "anyOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "search_hint"
+              },
+              "platformName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "query": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            },
+            "required": [
+              "type",
+              "platformName",
+              "query"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "mini_program"
+              },
+              "platformName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "appId": {
+                "type": "string",
+                "pattern": "^wx[a-f0-9]{16}$"
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1024
+              }
+            },
+            "required": [
+              "type",
+              "platformName",
+              "appId",
+              "path"
+            ]
+          }
+        ]
+      },
+      "PublishedVariant": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "totalWeight": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "weight",
+          "totalWeight"
+        ]
+      },
+      "VariantPreview": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "variantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "configHash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "nameCase": {
+            "type": "string",
+            "enum": [
+              "short",
+              "long",
+              "latin"
+            ]
+          },
+          "videoUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "posterUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "variantId",
+          "configHash",
+          "nameCase",
+          "videoUrl",
+          "posterUrl",
+          "expiresAt",
+          "requestId"
+        ]
+      },
+      "AssetList": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Asset"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "requestId"
+        ]
+      },
+      "VariantList": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariantAdmin"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
           "requestId"
         ]
       }
@@ -4913,5 +5459,6 @@
     "INTERNAL_ERROR": {
       "httpStatus": 500
     }
-  }
+  },
+  "x-admin-origin-policy": "production ADMIN_ORIGIN == PUBLIC_API_ORIGIN; admin UI /admin/; API /api/v1/admin; exact Origin checks, no wildcard CORS"
 }

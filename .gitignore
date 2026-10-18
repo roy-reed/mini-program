@@ -1,0 +1,11 @@
+node_modules/
+.task-context.md
+.venv-plan/
+.env
+.env.*
+!.env.example
+infra/prod.env
+**/project.private.config.json
+**/dist/
+**/coverage/
+*.log

@@ -186,3 +186,32 @@ function checkMarkdown(dir) {
 }
 checkMarkdown(root);
 console.log(JSON.stringify({ result: 'PASS', scope: 'planning-package only; no app/device/release tests', operations, schemas: Object.keys(api.components.schemas).length, configurationVariants: config.variants.length, schemaExamples: examples.examples.length, negativeChecks: 4, acceptanceCases: cases.cases.length, markdownFiles: markdownCount, examplePublication: 'blocked draft as intended' }, null, 2));
+
+// Execution-manual checks: finite ordered task graph, precise context and complete API ownership.
+const plan = read('specs/execution-plan.json');
+assert.equal(plan.tasks.length, 44);
+const taskIds = new Set(plan.tasks.map(t => t.id));
+assert.equal(taskIds.size, plan.tasks.length);
+const owners = new Map();
+for (const [index, task] of plan.tasks.entries()) {
+  assert.equal(task.id, `S${String(index).padStart(2,'0')}`);
+  assert.ok(plan.models[task.executor] && plan.models[task.reviewer]);
+  assert.notEqual(task.executor, task.reviewer);
+  assert.ok(task.steps.length && task.checks.length && task.files.length && task.commands.length);
+  for (const dep of task.dependsOn) assert.ok(taskIds.has(dep) && dep < task.id, `${task.id}: dependency order/cycle`);
+  for (const input of task.humanInputs) assert.match(input, /^H(?:0[1-9]|10)$/);
+  for (const input of task.readSections) {
+    const body=fs.readFileSync(path.join(root,input.path),'utf8');
+    if(input.headingPrefix) assert.equal(body.split('\n').filter(l => /^#{1,6} /.test(l) && l.replace(/^#{1,6} /,'').startsWith(input.headingPrefix)).length,1,`${task.id}: bad section ${input.headingPrefix}`);
+  }
+  const card=fs.readFileSync(path.join(root,`docs/tasks/${task.id}.md`),'utf8');
+  for(const command of task.commands) assert.ok(card.includes(command), `${task.id}: command drift`);
+  for(const step of task.steps) assert.ok(card.includes(step), `${task.id}: step drift`);
+  for(const opId of task.operationIds){ assert.ok(ids.has(opId),`${task.id}: missing API ${opId}`); (owners.get(opId) ?? (owners.set(opId,[]),owners.get(opId))).push(task.id); }
+}
+for (const id of ids) assert.equal(owners.get(id)?.length,1, `${id}: must have exactly one implementation owner`);
+for (const item of cases.cases) for(const task of item.executionTaskIds) assert.ok(taskIds.has(task), `${item.id}: task reference`);
+assert.ok(!JSON.stringify(api.components.schemas.ListenDestination).includes('web_view'));
+assert.ok(api.components.schemas.CampaignPublic.required.includes('variants'));
+assert.ok(api.paths['/admin/assets'].get && api.paths['/admin/campaigns/{id}/variants'].get && api.paths['/admin/variants/{id}/preview'].get);
+console.log(JSON.stringify({executionManual:'PASS',tasks:plan.tasks.length,ownedOperations:owners.size,scope:'planning and prompt tools only'}));

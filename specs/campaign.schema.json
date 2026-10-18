@@ -498,47 +498,68 @@
       "maxItems": 500
     },
     "listenDestination": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "search_hint",
-            "mini_program",
-            "web_view"
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "search_hint"
+            },
+            "platformName": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "query": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "verified": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "platformName",
+            "query",
+            "verified"
           ]
         },
-        "platformName": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 120
-        },
-        "query": {
-          "type": "string",
-          "maxLength": 200
-        },
-        "verified": {
-          "type": "boolean"
-        },
-        "appId": {
-          "type": "string",
-          "pattern": "^wx[0-9a-f]{16}$"
-        },
-        "path": {
-          "type": "string",
-          "maxLength": 1024
-        },
-        "url": {
-          "type": "string",
-          "format": "uri"
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "mini_program"
+            },
+            "platformName": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "appId": {
+              "type": "string",
+              "pattern": "^wx[a-f0-9]{16}$"
+            },
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024
+            },
+            "verified": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "platformName",
+            "appId",
+            "path",
+            "verified"
+          ]
         }
-      },
-      "required": [
-        "type",
-        "platformName",
-        "query",
-        "verified"
       ]
     },
     "publication": {
