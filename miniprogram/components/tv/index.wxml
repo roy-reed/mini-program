@@ -1,4 +1,4 @@
-<view class="tv tv--{{phase}} {{disabled ? 'tv--disabled' : ''}}" bindtap="onTap">
+<view class="tv tv--{{phase}} {{disabled ? 'tv--disabled' : ''}}" aria-label="{{label}}" bindtap="onTap">
   <view class="antenna antenna--left"></view>
   <view class="antenna antenna--right"></view>
   <view class="body">

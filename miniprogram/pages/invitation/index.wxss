@@ -10,3 +10,4 @@
 .ai { margin-top: 20rpx; color: var(--sc-ink-2); font-size: var(--sc-font-small); }
 .links { display: flex; align-items: center; gap: 14rpx; margin-top: 28rpx; font-size: var(--sc-font-small); }
 .sep { color: var(--sc-ink-2); }
+.button-hover { opacity: 0.78; }

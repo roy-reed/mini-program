@@ -10,3 +10,4 @@
 .actions { display: flex; flex-direction: column; gap: 16rpx; margin-top: 40rpx; }
 .link-button { color: var(--sc-accent); background: transparent; }
 .danger-button { color: var(--sc-danger); }
+.button-hover { opacity: 0.78; }

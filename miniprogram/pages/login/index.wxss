@@ -54,3 +54,5 @@
 .hint {
   margin-bottom: 24rpx;
 }
+
+.button-hover { opacity: 0.78; }

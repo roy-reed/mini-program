@@ -1,7 +1,7 @@
 <view class="page legal-page">
   <view class="tabs">
-    <button class="tab {{tab === 'terms' ? 'tab--active' : ''}}" size="mini" bindtap="onSelectTerms">{{copy.legal.termsTab}}</button>
-    <button class="tab {{tab === 'privacy' ? 'tab--active' : ''}}" size="mini" bindtap="onSelectPrivacy">{{copy.legal.privacyTab}}</button>
+    <button hover-class="button-hover" class="tab {{tab === 'terms' ? 'tab--active' : ''}}" size="mini" bindtap="onSelectTerms">{{copy.legal.termsTab}}</button>
+    <button hover-class="button-hover" class="tab {{tab === 'privacy' ? 'tab--active' : ''}}" size="mini" bindtap="onSelectPrivacy">{{copy.legal.privacyTab}}</button>
   </view>
   <block wx:if="{{tab === 'terms'}}">
     <view class="doc-title">{{terms.title}}</view>
@@ -19,8 +19,8 @@
       <view wx:for="{{item.paragraphs}}" wx:key="*this" class="paragraph">{{item}}</view>
     </view>
     <view class="actions">
-      <button class="link-button" size="mini" bindtap="onOpenWechatPrivacy">{{copy.legal.openWechatPrivacy}}</button>
-      <button class="link-button danger-button" size="mini" bindtap="onDeleteData">{{copy.legal.deleteData}}</button>
+      <button hover-class="button-hover" class="link-button" size="mini" bindtap="onOpenWechatPrivacy">{{copy.legal.openWechatPrivacy}}</button>
+      <button hover-class="button-hover" class="link-button danger-button" size="mini" bindtap="onDeleteData">{{copy.legal.deleteData}}</button>
     </view>
   </block>
 </view>

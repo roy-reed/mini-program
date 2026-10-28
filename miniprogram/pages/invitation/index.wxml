@@ -10,7 +10,7 @@
       <view wx:if="{{status === 'loading'}}" class="state">{{copy.inv.loading}}</view>
       <view wx:if="{{status === 'error'}}" class="state state--error">
         <text>{{copy.inv.loadFail}}</text>
-        <button size="mini" catchtap="onRetry">{{copy.inv.retry}}</button>
+        <button size="mini" hover-class="button-hover" catchtap="onRetry">{{copy.inv.retry}}</button>
       </view>
     </view>
   </envelope>
