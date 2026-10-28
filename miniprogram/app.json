@@ -3,8 +3,7 @@
     "pages/login/index",
     "pages/draw/index",
     "pages/invitation/index",
-    "pages/legal/index",
-    "pages/spike/index"
+    "pages/legal/index"
   ],
   "window": {
     "navigationBarTitleText": "共享和弦",

@@ -1,5 +1,23 @@
-<view class="page invitation-page">
-  <envelope state="{{env}}" to-text="{{toText}}" open-hint="{{openHint}}" close-hint="{{closeHint}}" width-rpx="520" height-rpx="693" duration-ms="{{envelopeMs}}" bind:toggle="onToggleEnvelope">
-    <view class="preview-player"></view>
+<view class="page invitation-page" wx:if="{{ready}}">
+  <view wx:if="{{showHeader}}" class="header">
+    <text class="album">{{albumTitle}}</text>
+    <text class="release">{{releaseText}}</text>
+  </view>
+  <envelope state="{{env}}" to-text="{{toText}}" open-hint="{{copy.inv.tapToOpen}}" close-hint="{{copy.inv.tapToClose}}" poster-url="{{posterUrl}}" width-rpx="{{playerWidthRpx}}" height-rpx="{{playerHeightRpx}}" duration-ms="{{envelopeMs}}" bind:toggle="onToggleEnvelope">
+    <view class="player" style="width:{{playerWidthRpx}}rpx;height:{{playerHeightRpx}}rpx">
+      <video wx:if="{{showVideo}}" id="player" class="video" src="{{videoUrl}}" poster="{{posterUrl}}" loop controls="{{false}}" show-center-play-btn="{{false}}" show-play-btn="{{false}}" show-fullscreen-btn="{{false}}" show-progress="{{false}}" enable-progress-gesture="{{false}}" object-fit="cover" bindplay="onVideoPlay" bindwaiting="onVideoWaiting" binderror="onVideoError" bindtimeupdate="onTimeUpdate"></video>
+      <view class="name" style="top:{{nameTopPct * 100}}%;color:{{nameColor}};font-size:{{nameFontRpx}}rpx;opacity:{{nameOpacity}}">{{inviteText}}</view>
+      <view wx:if="{{status === 'loading'}}" class="state">{{copy.inv.loading}}</view>
+      <view wx:if="{{status === 'error'}}" class="state state--error">
+        <text>{{copy.inv.loadFail}}</text>
+        <button size="mini" catchtap="onRetry">{{copy.inv.retry}}</button>
+      </view>
+    </view>
   </envelope>
+  <view wx:if="{{aiNotice}}" class="ai">{{copy.inv.aiNotice}}</view>
+  <view class="links">
+    <text class="link" bindtap="onChangeName">{{copy.inv.changeName}}</text>
+    <text class="sep">·</text>
+    <text class="link" bindtap="onLegal">{{copy.inv.legal}}</text>
+  </view>
 </view>

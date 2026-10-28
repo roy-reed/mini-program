@@ -1,2 +1,12 @@
-.invitation-page { display: flex; justify-content: center; align-items: flex-start; padding-top: 32rpx; }
-.preview-player { width: 100%; height: 100%; border-radius: var(--sc-radius); background: var(--sc-player-bg); }
+.invitation-page { display: flex; flex-direction: column; align-items: center; padding-top: 24rpx; }
+.header { width: 100%; margin-bottom: 24rpx; text-align: center; }
+.album { display: block; color: var(--sc-ink); font-size: var(--sc-font-body); font-weight: 600; }
+.release { display: block; margin-top: 6rpx; color: var(--sc-ink-2); font-size: var(--sc-font-small); }
+.player { position: relative; overflow: hidden; border-radius: var(--sc-radius); background: var(--sc-player-bg); }
+.video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+.name { position: absolute; left: 0; width: 100%; line-height: 1.2; text-align: center; text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.35); white-space: nowrap; transition: opacity 250ms linear; }
+.state { position: absolute; top: 50%; left: 0; width: 100%; color: var(--sc-accent-ink); font-size: var(--sc-font-small); text-align: center; transform: translateY(-50%); }
+.state--error { display: flex; flex-direction: column; align-items: center; gap: 20rpx; }
+.ai { margin-top: 20rpx; color: var(--sc-ink-2); font-size: var(--sc-font-small); }
+.links { display: flex; align-items: center; gap: 14rpx; margin-top: 28rpx; font-size: var(--sc-font-small); }
+.sep { color: var(--sc-ink-2); }
