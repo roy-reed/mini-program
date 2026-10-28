@@ -1,0 +1,4 @@
+<view class="burst {{active ? 'burst--active' : ''}}" style="--burst-duration:{{durationMs}}ms">
+  <view wx:for="{{particles}}" wx:key="index" class="particle" style="{{item.style}}"></view>
+  <view class="flash"></view>
+</view>

@@ -1,4 +1,7 @@
 {
   "navigationBarTitleText": "共享和弦",
-  "usingComponents": {}
+  "usingComponents": {
+    "tv": "/components/tv/index",
+    "burst": "/components/burst/index"
+  }
 }

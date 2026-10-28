@@ -1,0 +1,8 @@
+.burst { position: fixed; z-index: 10; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; }
+.particle, .flash { position: absolute; top: 50%; left: 50%; opacity: 0; }
+.particle { width: 22rpx; height: 64rpx; border-radius: 12rpx; background: var(--burst-color); transform: rotate(var(--burst-angle)) translateY(0) scale(0.4); }
+.burst--active .particle { animation: particle-fly var(--burst-duration) cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.flash { width: 120rpx; height: 120rpx; border-radius: 50%; background: var(--sc-burst-4); transform: translate(-50%, -50%) scale(0.2); }
+.burst--active .flash { animation: flash-pop var(--burst-duration) ease-out both; }
+@keyframes particle-fly { 0% { opacity: 0; transform: rotate(var(--burst-angle)) translateY(0) scale(0.4); } 18% { opacity: 1; } 100% { opacity: 0; transform: rotate(var(--burst-angle)) translateY(calc(var(--burst-distance) * -1)) scale(1); } }
+@keyframes flash-pop { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); } 20% { opacity: 0.95; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(8); } }
