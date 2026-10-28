@@ -1,1 +1,26 @@
-<view class="page"></view>
+<view class="page legal-page">
+  <view class="tabs">
+    <button class="tab {{tab === 'terms' ? 'tab--active' : ''}}" size="mini" bindtap="onSelectTerms">{{copy.legal.termsTab}}</button>
+    <button class="tab {{tab === 'privacy' ? 'tab--active' : ''}}" size="mini" bindtap="onSelectPrivacy">{{copy.legal.privacyTab}}</button>
+  </view>
+  <block wx:if="{{tab === 'terms'}}">
+    <view class="doc-title">{{terms.title}}</view>
+    <view class="updated">{{copy.legal.updatedAt}}: {{terms.updatedAt}}</view>
+    <view wx:for="{{terms.sections}}" wx:key="heading" class="section">
+      <view class="heading">{{item.heading}}</view>
+      <view wx:for="{{item.paragraphs}}" wx:key="*this" class="paragraph">{{item}}</view>
+    </view>
+  </block>
+  <block wx:else>
+    <view class="doc-title">{{privacy.title}}</view>
+    <view class="updated">{{copy.legal.updatedAt}}: {{privacy.updatedAt}}</view>
+    <view wx:for="{{privacy.sections}}" wx:key="heading" class="section">
+      <view class="heading">{{item.heading}}</view>
+      <view wx:for="{{item.paragraphs}}" wx:key="*this" class="paragraph">{{item}}</view>
+    </view>
+    <view class="actions">
+      <button class="link-button" size="mini" bindtap="onOpenWechatPrivacy">{{copy.legal.openWechatPrivacy}}</button>
+      <button class="link-button danger-button" size="mini" bindtap="onDeleteData">{{copy.legal.deleteData}}</button>
+    </view>
+  </block>
+</view>

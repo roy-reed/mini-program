@@ -1,1 +1,12 @@
-.page {}
+.legal-page { padding-top: 24rpx; }
+.tabs { display: flex; gap: 16rpx; margin-bottom: 32rpx; }
+.tab { flex: 1; color: var(--sc-ink-2); background: var(--sc-paper); }
+.tab--active { color: var(--sc-accent-ink); background: var(--sc-accent); }
+.doc-title { color: var(--sc-ink); font-size: var(--sc-font-title); font-weight: 600; }
+.updated { margin-top: 8rpx; color: var(--sc-ink-2); font-size: var(--sc-font-small); }
+.section { margin-top: 36rpx; }
+.heading { color: var(--sc-ink); font-size: var(--sc-font-body); font-weight: 600; }
+.paragraph { margin-top: 14rpx; color: var(--sc-ink); font-size: var(--sc-font-small); line-height: 1.8; }
+.actions { display: flex; flex-direction: column; gap: 16rpx; margin-top: 40rpx; }
+.link-button { color: var(--sc-accent); background: transparent; }
+.danger-button { color: var(--sc-danger); }
