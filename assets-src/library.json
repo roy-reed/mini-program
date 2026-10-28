@@ -36,7 +36,10 @@
       "id": "swing",
       "name": "台灯秋千",
       "file": "videos/swing.mp4",
-      "clip": { "start": 0, "duration": 2.5 },
+      "clip": {
+        "start": 0,
+        "duration": 2.5
+      },
       "pingpong": true,
       "textColor": "#3B2A1A",
       "aiGenerated": true,
@@ -47,16 +50,32 @@
   "audios": [
     {
       "id": "track01",
-      "name": "【待填】曲目 1 片段",
+      "name": "片段1",
       "file": "audios/track01.mp3",
-      "clip": { "start": 30, "duration": 32.4 },
+      "clip": null,
       "weight": 1,
       "enabled": true
     },
     {
       "id": "track02",
-      "name": "【待填】曲目 2 片段",
+      "name": "片段2",
       "file": "audios/track02.mp3",
+      "clip": null,
+      "weight": 1,
+      "enabled": true
+    },
+    {
+      "id": "track03",
+      "name": "片段3",
+      "file": "audios/track03.mp3",
+      "clip": null,
+      "weight": 1,
+      "enabled": true
+    },
+    {
+      "id": "track04",
+      "name": "片段4",
+      "file": "audios/track04.mp3",
       "clip": null,
       "weight": 1,
       "enabled": true
