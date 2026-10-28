@@ -1,7 +1,6 @@
 <view class="page draw-page">
   <view class="draw-title">{{copy.draw.title}}</view>
   <tv phase="{{phase}}" label="{{copy.draw.button}}" disabled="{{disabled}}" bind:draw="onDraw" />
-  <button class="btn-primary draw-button" disabled="{{disabled}}" bindtap="onDraw">{{copy.draw.button}}</button>
   <view class="link rules-link" bindtap="onRules">{{copy.draw.rules}}</view>
   <burst active="{{phase === 'burst'}}" duration-ms="{{burstMs}}" />
 </view>
