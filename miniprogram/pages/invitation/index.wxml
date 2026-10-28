@@ -1,1 +1,5 @@
-<view class="page"></view>
+<view class="page invitation-page">
+  <envelope state="{{env}}" to-text="{{toText}}" open-hint="{{openHint}}" close-hint="{{closeHint}}" width-rpx="520" height-rpx="693" duration-ms="{{envelopeMs}}" bind:toggle="onToggleEnvelope">
+    <view class="preview-player"></view>
+  </envelope>
+</view>

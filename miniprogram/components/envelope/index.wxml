@@ -1,0 +1,11 @@
+<view class="envelope envelope--{{state}}" style="width:{{widthRpx}}rpx;height:{{widthRpx * 0.62}}rpx;--paper-width:{{widthRpx}}rpx;--paper-height:{{heightRpx}}rpx;--envelope-duration:{{durationMs}}ms">
+  <view class="paper">
+    <image wx:if="{{state !== 'open' && posterUrl}}" class="paper-cover" src="{{posterUrl}}" mode="aspectFill"></image>
+    <view class="paper-slot"><slot></slot></view>
+  </view>
+  <view class="front" bindtap="onToggle">
+    <view class="flap"></view>
+    <view class="to-text">{{toText}}</view>
+    <view class="hint">{{state === 'open' ? closeHint : openHint}}</view>
+  </view>
+</view>
