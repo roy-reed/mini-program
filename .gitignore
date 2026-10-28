@@ -1,0 +1,15 @@
+# 依赖与生成物
+node_modules/
+coverage/
+work/
+dist-assets/
+*.log
+.DS_Store
+
+# 素材原文件不进 git（体积大、有版权）；只提交 assets-src/library.json
+assets-src/videos/
+assets-src/audios/
+assets-src/overlays/
+
+# 开发者工具的本机设置
+project.private.config.json

@@ -1,0 +1,24 @@
+{
+  "name": "shared-chord",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "共享和弦微信小程序 Demo",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.node.json",
+    "test": "vitest run",
+    "check:words": "tsx scripts/check-words.ts",
+    "assets": "tsx scripts/assets.ts",
+    "precheck": "tsx scripts/precheck.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "miniprogram-api-typings": "^5.2.3",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  }
+}
