@@ -2,15 +2,15 @@
 import type { Manifest } from '../core/manifest-types'
 
 export const MANIFEST: Manifest = {
-  "version": 0,
-  "generatedAt": "2026-10-28T18:00:41.085Z",
+  "version": 1,
+  "generatedAt": "2026-10-28T23:08:16.953Z",
   "base": "https://example.invalid/shared-chord",
   "album": {
-    "title": "Sample Album",
-    "releaseDate": "2026.10"
+    "title": "【待填】专辑名",
+    "releaseDate": "【待填】2026.11"
   },
   "copy": {
-    "inviteLine": "Invite {name} to listen"
+    "inviteLine": "诚邀 {name} 收听"
   },
   "layout": {
     "nameTopPct": 0.7,
@@ -20,72 +20,124 @@ export const MANIFEST: Manifest = {
   "titleBaked": false,
   "videos": [
     {
-      "id": "sample-a",
+      "id": "door",
       "textColor": "#FFFFFF",
       "aiGenerated": true,
       "weight": 1
     },
     {
-      "id": "sample-b",
+      "id": "swing",
       "textColor": "#3B2A1A",
-      "aiGenerated": false,
+      "aiGenerated": true,
       "weight": 1
     }
   ],
   "audios": [
     {
-      "id": "sample-a",
+      "id": "track01",
       "weight": 1
     },
     {
-      "id": "sample-b",
+      "id": "track02",
+      "weight": 1
+    },
+    {
+      "id": "track03",
+      "weight": 1
+    },
+    {
+      "id": "track04",
       "weight": 1
     }
   ],
   "combos": {
-    "sample-a__sample-a": {
-      "key": "sample-a__sample-a",
-      "videoId": "sample-a",
-      "audioId": "sample-a",
-      "url": "https://example.invalid/shared-chord/v0/combos/sample-a__sample-a.mp4",
-      "posterUrl": "https://example.invalid/shared-chord/v0/posters/sample-a__sample-a.jpg",
-      "playMs": 12000,
+    "door__track01": {
+      "key": "door__track01",
+      "videoId": "door",
+      "audioId": "track01",
+      "url": "https://example.invalid/shared-chord/v1/combos/door__track01.mp4",
+      "posterUrl": "https://example.invalid/shared-chord/v1/posters/door__track01.jpg",
+      "playMs": 34400,
       "loopMs": 2000,
-      "durationMs": 15000,
-      "sizeBytes": 2920610
+      "durationMs": 37400,
+      "sizeBytes": 8435378
     },
-    "sample-a__sample-b": {
-      "key": "sample-a__sample-b",
-      "videoId": "sample-a",
-      "audioId": "sample-b",
-      "url": "https://example.invalid/shared-chord/v0/combos/sample-a__sample-b.mp4",
-      "posterUrl": "https://example.invalid/shared-chord/v0/posters/sample-a__sample-b.jpg",
-      "playMs": 15000,
+    "door__track02": {
+      "key": "door__track02",
+      "videoId": "door",
+      "audioId": "track02",
+      "url": "https://example.invalid/shared-chord/v1/combos/door__track02.mp4",
+      "posterUrl": "https://example.invalid/shared-chord/v1/posters/door__track02.jpg",
+      "playMs": 37100,
       "loopMs": 2000,
-      "durationMs": 18000,
-      "sizeBytes": 3693872
+      "durationMs": 40100,
+      "sizeBytes": 9072805
     },
-    "sample-b__sample-a": {
-      "key": "sample-b__sample-a",
-      "videoId": "sample-b",
-      "audioId": "sample-a",
-      "url": "https://example.invalid/shared-chord/v0/combos/sample-b__sample-a.mp4",
-      "posterUrl": "https://example.invalid/shared-chord/v0/posters/sample-b__sample-a.jpg",
-      "playMs": 12000,
-      "loopMs": 3000,
-      "durationMs": 15000,
-      "sizeBytes": 424182
+    "door__track03": {
+      "key": "door__track03",
+      "videoId": "door",
+      "audioId": "track03",
+      "url": "https://example.invalid/shared-chord/v1/combos/door__track03.mp4",
+      "posterUrl": "https://example.invalid/shared-chord/v1/posters/door__track03.jpg",
+      "playMs": 35100,
+      "loopMs": 2000,
+      "durationMs": 38100,
+      "sizeBytes": 8590446
     },
-    "sample-b__sample-b": {
-      "key": "sample-b__sample-b",
-      "videoId": "sample-b",
-      "audioId": "sample-b",
-      "url": "https://example.invalid/shared-chord/v0/combos/sample-b__sample-b.mp4",
-      "posterUrl": "https://example.invalid/shared-chord/v0/posters/sample-b__sample-b.jpg",
-      "playMs": 15000,
-      "loopMs": 3000,
-      "durationMs": 18000,
-      "sizeBytes": 522787
+    "door__track04": {
+      "key": "door__track04",
+      "videoId": "door",
+      "audioId": "track04",
+      "url": "https://example.invalid/shared-chord/v1/combos/door__track04.mp4",
+      "posterUrl": "https://example.invalid/shared-chord/v1/posters/door__track04.jpg",
+      "playMs": 34100,
+      "loopMs": 2000,
+      "durationMs": 37100,
+      "sizeBytes": 8353677
+    },
+    "swing__track01": {
+      "key": "swing__track01",
+      "videoId": "swing",
+      "audioId": "track01",
+      "url": "https://example.invalid/shared-chord/v1/combos/swing__track01.mp4",
+      "posterUrl": "https://example.invalid/shared-chord/v1/posters/swing__track01.jpg",
+      "playMs": 34400,
+      "loopMs": 5000,
+      "durationMs": 37400,
+      "sizeBytes": 1173081
+    },
+    "swing__track02": {
+      "key": "swing__track02",
+      "videoId": "swing",
+      "audioId": "track02",
+      "url": "https://example.invalid/shared-chord/v1/combos/swing__track02.mp4",
+      "posterUrl": "https://example.invalid/shared-chord/v1/posters/swing__track02.jpg",
+      "playMs": 37100,
+      "loopMs": 5000,
+      "durationMs": 40100,
+      "sizeBytes": 1258773
+    },
+    "swing__track03": {
+      "key": "swing__track03",
+      "videoId": "swing",
+      "audioId": "track03",
+      "url": "https://example.invalid/shared-chord/v1/combos/swing__track03.mp4",
+      "posterUrl": "https://example.invalid/shared-chord/v1/posters/swing__track03.jpg",
+      "playMs": 35100,
+      "loopMs": 5000,
+      "durationMs": 38100,
+      "sizeBytes": 1192870
+    },
+    "swing__track04": {
+      "key": "swing__track04",
+      "videoId": "swing",
+      "audioId": "track04",
+      "url": "https://example.invalid/shared-chord/v1/combos/swing__track04.mp4",
+      "posterUrl": "https://example.invalid/shared-chord/v1/posters/swing__track04.jpg",
+      "playMs": 34100,
+      "loopMs": 5000,
+      "durationMs": 37100,
+      "sizeBytes": 1159030
     }
   }
 }
