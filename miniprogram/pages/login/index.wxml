@@ -1,1 +1,24 @@
-<view class="page"></view>
+<view class="page">
+  <view class="hero">
+    <view class="title">{{copy.login.title}}</view>
+    <view class="subtitle">{{copy.login.subtitle}}</view>
+  </view>
+  <block wx:if="{{step === 'agree'}}">
+    <view class="agree" bindtap="onToggleAgree">
+      <view class="checkbox {{agreed ? 'checkbox--on' : ''}}"></view>
+      <text>{{copy.login.agreePrefix}}</text>
+      <text class="link" catchtap="onOpenTerms">{{copy.login.terms}}</text>
+      <text>{{copy.login.and}}</text>
+      <text class="link" catchtap="onOpenPrivacy">{{copy.login.privacy}}</text>
+    </view>
+    <button wx:if="{{agreed}}" class="btn-primary" open-type="agreePrivacyAuthorization" bindagreeprivacyauthorization="onAgreePrivacy">{{copy.login.button}}</button>
+    <button wx:else class="btn-primary btn-primary--off" bindtap="onNeedAgree">{{copy.login.button}}</button>
+  </block>
+  <form wx:elif="{{step === 'name'}}" bindsubmit="onSubmit">
+    <view class="title">{{edit ? copy.name.editTitle : copy.name.title}}</view>
+    <input class="input" type="nickname" name="nickname" value="{{nameValue}}" maxlength="10" placeholder="{{copy.name.placeholder}}" bindinput="onNameInput" bindnicknamereview="onNicknameReview" />
+    <view class="hint">{{copy.name.hint}}</view>
+    <view wx:if="{{nameError}}" class="error">{{nameError}}</view>
+    <button class="btn-primary" form-type="submit" loading="{{submitting}}">{{edit ? copy.name.save : copy.name.submit}}</button>
+  </form>
+</view>
