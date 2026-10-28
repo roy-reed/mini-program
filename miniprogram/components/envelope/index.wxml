@@ -1,4 +1,4 @@
-<view class="envelope envelope--{{state}}" style="width:{{widthRpx}}rpx;height:{{widthRpx * 0.62}}rpx;--paper-width:{{widthRpx}}rpx;--paper-height:{{heightRpx}}rpx;--envelope-duration:{{durationMs}}ms">
+<view class="envelope envelope--{{state}}" style="width:{{widthRpx}}rpx;height:{{containerHeightRpx}}rpx;--paper-width:{{widthRpx}}rpx;--paper-height:{{heightRpx}}rpx;--envelope-duration:{{durationMs}}ms">
   <view class="paper">
     <image wx:if="{{state !== 'open' && posterUrl}}" class="paper-cover" src="{{posterUrl}}" mode="aspectFill"></image>
     <view class="paper-slot"><slot></slot></view>

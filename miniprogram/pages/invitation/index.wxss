@@ -1,2 +1,2 @@
-.invitation-page { display: flex; justify-content: center; align-items: flex-start; padding-top: 96rpx; }
+.invitation-page { display: flex; justify-content: center; align-items: flex-start; padding-top: 32rpx; }
 .preview-player { width: 100%; height: 100%; border-radius: var(--sc-radius); background: var(--sc-player-bg); }
