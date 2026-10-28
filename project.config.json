@@ -1,0 +1,16 @@
+{
+  "compileType": "miniprogram",
+  "miniprogramRoot": "miniprogram/",
+  "projectname": "shared-chord",
+  "appid": "wx0000000000000000",
+  "setting": {
+    "useCompilerPlugins": ["typescript"],
+    "urlCheck": true,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "ignoreUploadUnusedFiles": true
+  },
+  "editorSetting": { "tabIndent": "insertSpaces", "tabSize": 2 }
+}

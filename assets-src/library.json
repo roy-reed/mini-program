@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "album": {
+    "title": "【待填】专辑名",
+    "releaseDate": "【待填】2026.11"
+  },
+  "copy": {
+    "inviteLine": "诚邀 {name} 收听"
+  },
+  "timeline": {
+    "loopMode": "ceil"
+  },
+  "layout": {
+    "nameTopPct": 0.7,
+    "nameMaxRpx": 44,
+    "nameMinRpx": 28
+  },
+  "overlays": {
+    "title": null,
+    "aiLabel": "overlays/ai-label.png"
+  },
+  "allowUnequalWeights": false,
+  "videos": [
+    {
+      "id": "door",
+      "name": "门洞穿梭",
+      "file": "videos/door.gif",
+      "clip": null,
+      "pingpong": false,
+      "textColor": "#FFFFFF",
+      "aiGenerated": true,
+      "weight": 1,
+      "enabled": true
+    },
+    {
+      "id": "swing",
+      "name": "台灯秋千",
+      "file": "videos/swing.mp4",
+      "clip": { "start": 0, "duration": 2.5 },
+      "pingpong": true,
+      "textColor": "#3B2A1A",
+      "aiGenerated": true,
+      "weight": 1,
+      "enabled": true
+    }
+  ],
+  "audios": [
+    {
+      "id": "track01",
+      "name": "【待填】曲目 1 片段",
+      "file": "audios/track01.mp3",
+      "clip": { "start": 30, "duration": 32.4 },
+      "weight": 1,
+      "enabled": true
+    },
+    {
+      "id": "track02",
+      "name": "【待填】曲目 2 片段",
+      "file": "audios/track02.mp3",
+      "clip": null,
+      "weight": 1,
+      "enabled": true
+    }
+  ]
+}

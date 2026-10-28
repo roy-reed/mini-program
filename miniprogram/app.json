@@ -1,0 +1,18 @@
+{
+  "pages": [
+    "pages/login/index",
+    "pages/draw/index",
+    "pages/invitation/index",
+    "pages/legal/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "共享和弦",
+    "navigationBarBackgroundColor": "#FFF6E5",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#FFF6E5"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents",
+  "__usePrivacyCheck__": true
+}

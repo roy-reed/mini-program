@@ -1,0 +1,48 @@
+page {
+  --sc-bg: #FFF6E5;
+  --sc-paper: #FFFDF7;
+  --sc-ink: #3B2A1A;
+  --sc-ink-2: #7A6552;
+  --sc-accent: #F2A541;
+  --sc-accent-ink: #FFFFFF;
+  --sc-line: #EADBC3;
+  --sc-danger: #C2410C;
+  --sc-player-bg: #000000;
+  --sc-burst-1: #FFD166;
+  --sc-burst-2: #F2A541;
+  --sc-burst-3: #FF8C69;
+  --sc-burst-4: #FFFFFF;
+  --sc-radius: 24rpx;
+  --sc-font-title: 44rpx;
+  --sc-font-body: 30rpx;
+  --sc-font-small: 24rpx;
+  background: var(--sc-bg);
+  color: var(--sc-ink);
+  font-size: var(--sc-font-body);
+}
+
+.page {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: 48rpx 48rpx calc(48rpx + env(safe-area-inset-bottom));
+}
+
+.btn-primary {
+  height: 96rpx;
+  border-radius: var(--sc-radius);
+  background: var(--sc-accent);
+  color: var(--sc-accent-ink);
+}
+
+.btn-primary--off {
+  opacity: 0.5;
+}
+
+.link {
+  color: var(--sc-accent);
+  text-decoration: underline;
+}
+
+.error {
+  color: var(--sc-danger);
+}
