@@ -1,6 +1,7 @@
 import { NAME_REVIEW_WAIT_MS } from '../../config'
 import { COPY, t } from '../../core/copy'
-import { NAME_ERROR_KEYS, validateName, type NameError } from '../../core/name'
+import { NAME_ERROR_KEYS, validateName } from '../../core/name'
+import type { NameError } from '../../core/name'
 import { currentEntry, goEntry, PAGES } from '../../services/nav'
 import { loadProfile, saveAgreement, saveName } from '../../services/store'
 

@@ -7,9 +7,9 @@
 .paper-slot { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 .front { position: absolute; z-index: 2; right: 0; bottom: 0; left: 0; box-sizing: border-box; height: 62%; overflow: hidden; border: 8rpx solid var(--sc-ink); border-radius: 28rpx; background: var(--sc-accent); text-align: center; transition: top var(--envelope-duration) ease, bottom var(--envelope-duration) ease, height var(--envelope-duration) ease; }
 .envelope--open .front { top: var(--paper-height); bottom: auto; height: 160rpx; border-radius: 0 0 28rpx 28rpx; }
-.flap { position: absolute; top: -48%; left: 8%; width: 84%; height: 84%; border-right: 8rpx solid var(--sc-ink); border-bottom: 8rpx solid var(--sc-ink); background: var(--sc-accent); transform: rotate(45deg); transform-origin: center; transition: transform var(--envelope-duration) ease; }
-.envelope--opening .flap { transform: rotate(225deg); }
-.envelope--open .flap { transform: rotate(225deg); }
-.envelope--closing .flap { transform: rotate(45deg); }
+.flap { position: absolute; z-index: 1; top: 0; left: 0; width: 100%; height: 58%; border-bottom: 6rpx solid var(--sc-ink); background: var(--sc-accent); clip-path: polygon(0 0, 100% 0, 50% 100%); transform-origin: top center; transition: transform var(--envelope-duration) ease, opacity var(--envelope-duration) ease; }
+.envelope--opening .flap { transform: translateY(-70%) rotateX(180deg); opacity: 0.75; }
+.envelope--open .flap { transform: translateY(-90%) rotateX(180deg); opacity: 0; }
+.envelope--closing .flap { transform: translateY(-70%) rotateX(180deg); opacity: 0.75; }
 .to-text { position: absolute; top: 48%; left: 0; width: 100%; color: var(--sc-ink); font-size: var(--sc-font-body); font-weight: 600; transform: translateY(-50%); }
 .hint { position: absolute; right: 0; bottom: 20rpx; left: 0; color: var(--sc-ink-2); font-size: var(--sc-font-small); }
