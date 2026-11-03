@@ -1,7 +1,9 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
-import { join, relative, resolve } from 'node:path'
+import { dirname, join, relative, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { MANIFEST } from '../miniprogram/data/manifest'
 import { validateManifest } from '../miniprogram/core/manifest-check'
+import type { Manifest } from '../miniprogram/core/manifest-types'
 import { runCheck } from './check-words'
 
 export type CheckResult = { ok: boolean; message: string; warnings?: string[] }
@@ -23,9 +25,12 @@ export function checkPages(app: unknown): CheckResult {
     : result(false, 'app.json pages must contain exactly the four formal pages')
 }
 
-export function checkManifest(manifest: typeof MANIFEST): CheckResult {
+export function checkManifest(manifest: Manifest): CheckResult {
   const problems = validateManifest(manifest)
-  if (manifest.base.includes('example.invalid')) problems.push('manifest base still uses example.invalid')
+  const base = typeof manifest.base === 'string' ? manifest.base : ''
+  if (!base.startsWith('https://')) problems.push('manifest base must start with https://')
+  if (base.endsWith('/')) problems.push('manifest base must not end with /')
+  if (base.includes('example.invalid')) problems.push('manifest base still uses example.invalid')
   if (manifest.version < 1) problems.push('manifest version must be at least 1')
   if (manifest.videos.length < 2 || manifest.audios.length < 2) problems.push('manifest needs at least two videos and two audios')
   return problems.length === 0 ? result(true, 'manifest is ready') : result(false, problems.join('; '))
@@ -78,9 +83,13 @@ export function checkSize(root: string): CheckResult {
   const total = files.reduce((sum, file) => sum + statSync(file).size, 0)
   const assets = walkFiles(join(root, 'miniprogram/assets')).reduce((sum, file) => sum + statSync(file).size, 0)
   const warnings: string[] = []
+  const failures: string[] = []
   if (total >= 1.5 * 1024 * 1024) warnings.push(`miniprogram size is ${(total / 1024 / 1024).toFixed(2)} MB`)
-  if (assets >= 300 * 1024) warnings.push(`assets size is ${(assets / 1024).toFixed(0)} KB`)
-  return total > 2 * 1024 * 1024 ? result(false, `miniprogram exceeds 2 MB (${total} bytes)`, warnings) : result(true, `package size ${total} bytes`, warnings)
+  if (total > 2 * 1024 * 1024) failures.push(`miniprogram exceeds 2 MB (${total} bytes)`)
+  if (assets >= 300 * 1024) failures.push(`miniprogram/assets exceeds 300 KB (${assets} bytes)`)
+  return failures.length === 0
+    ? result(true, `package size ${total} bytes`, warnings)
+    : result(false, failures.join('; '), warnings)
 }
 
 export function checkVersion(root: string): CheckResult {
@@ -90,20 +99,23 @@ export function checkVersion(root: string): CheckResult {
   return match !== null && record.includes(match[1]) ? result(true, `version ${match[1]} is recorded`) : result(false, 'APP_VERSION is missing from 版本记录.md')
 }
 
-async function checkOnline(): Promise<CheckResult> {
-  const entries = Object.values(MANIFEST.combos).flatMap((combo) => [{ url: combo.url, type: 'video/mp4' }, { url: combo.posterUrl, type: 'image/jpeg' }])
+export async function checkOnlineAssets(manifest: Manifest, fetcher: typeof fetch = fetch): Promise<CheckResult> {
+  const entries = Object.values(manifest.combos).flatMap((combo) => [{ url: combo.url, type: 'video/mp4' }, { url: combo.posterUrl, type: 'image/jpeg' }])
   const failures: string[] = []
   for (const entry of entries) {
     try {
-      const response = await fetch(entry.url, { method: 'HEAD' })
+      const response = await fetcher(entry.url, { method: 'HEAD' })
       const contentType = response.headers.get('content-type') ?? ''
-      if (!response.ok || !contentType.includes(entry.type)) failures.push(`${entry.url}: ${response.status} ${contentType}`)
+      if (!response.ok || !contentType.toLowerCase().includes(entry.type)) failures.push(`${entry.url}: ${response.status} ${contentType}`)
     } catch (error) { failures.push(`${entry.url}: ${error instanceof Error ? error.message : String(error)}`) }
   }
   return failures.length === 0 ? result(true, 'online assets are reachable') : result(false, failures.join('; '))
 }
 
-export async function runPrecheck(root = resolve(new URL('.', import.meta.url).pathname, '..'), online = false): Promise<number> {
+const SCRIPT_PATH = fileURLToPath(import.meta.url)
+const SCRIPT_DIR = dirname(SCRIPT_PATH)
+
+export async function runPrecheck(root = resolve(SCRIPT_DIR, '..'), online = false): Promise<number> {
   const checks: Array<[string, CheckResult]> = []
   const readJson = (file: string): unknown => JSON.parse(readFileSync(join(root, file), 'utf8')) as unknown
   checks.push(['AppID', checkAppId(readJson('project.config.json'))])
@@ -116,7 +128,7 @@ export async function runPrecheck(root = resolve(new URL('.', import.meta.url).p
   checks.push(['Version', checkVersion(root)])
   if (runCheck(root) !== 0) checks.push(['check:words', result(false, 'check:words failed')])
   else checks.push(['check:words', result(true, 'check:words passed')])
-  if (online) checks.push(['Online assets', await checkOnline()])
+  if (online) checks.push(['Online assets', await checkOnlineAssets(MANIFEST)])
   for (const [name, item] of checks) {
     console.log(`${item.ok ? '✓' : '✗'} ${name}: ${item.message}`)
     for (const warning of item.warnings ?? []) console.warn(`! ${name}: ${warning}`)
@@ -124,6 +136,6 @@ export async function runPrecheck(root = resolve(new URL('.', import.meta.url).p
   return checks.every(([, item]) => item.ok) ? 0 : 1
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.url).pathname)) {
+if (process.argv[1] && resolve(process.argv[1]) === resolve(SCRIPT_PATH)) {
   runPrecheck(process.cwd(), process.argv.includes('--online')).then((code) => { process.exitCode = code })
 }
