@@ -104,17 +104,12 @@ describe('precheck helpers', () => {
     const manifest = manifestWithBase('https://cdn.example.com/shared-chord')
     const goodFetcher: typeof fetch = async (input) => {
       const contentType = String(input).endsWith('.mp4') ? 'video/mp4' : 'image/jpeg'
-      return {
-        ok: true,
-        status: 200,
-        headers: { get: (name: string) => name.toLowerCase() === 'content-type' ? contentType : null },
-      } as Response
+      return new Response(null, { status: 200, headers: { 'content-type': contentType } })
     }
-    const badFetcher: typeof fetch = async () => ({
-      ok: false,
+    const badFetcher: typeof fetch = async () => new Response('forbidden', {
       status: 403,
-      headers: { get: () => 'text/html' },
-    } as Response)
+      headers: { 'content-type': 'text/html' },
+    })
 
     expect((await checkOnlineAssets(manifest, goodFetcher)).ok).toBe(true)
     expect((await checkOnlineAssets(manifest, badFetcher)).ok).toBe(false)
