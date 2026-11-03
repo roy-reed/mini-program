@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { findForbidden, parseWords } from '../check-words'
 
 export interface Clip {
@@ -158,7 +158,7 @@ export function parseLibrary(input: unknown): LibraryResult {
   if (!allowUnequalWeights) { equalEnabledWeights(videos, 'video', problems); equalEnabledWeights(audios, 'audio', problems) }
   if (videos.some((item) => item.aiGenerated) && aiLabel === null) problems.push('overlays.aiLabel is required when a video is AI generated')
 
-  const wordsPath = resolve(new URL('.', import.meta.url).pathname, '../forbidden-words.txt')
+  const wordsPath = fileURLToPath(new URL('../forbidden-words.txt', import.meta.url))
   try {
     const words = parseWords(readFileSync(wordsPath, 'utf8'))
     for (const hit of findForbidden(`${album.title}\n${copy.inviteLine}`, words)) problems.push(`forbidden word in ${hit.text}: ${hit.word}`)
