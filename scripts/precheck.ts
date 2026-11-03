@@ -94,7 +94,7 @@ export function checkSize(root: string): CheckResult {
 
 export function checkVersion(root: string): CheckResult {
   const versionText = fileText(root, 'miniprogram/core/version.ts')
-  const match = versionText.match(/APP_VERSION\s*=\s*['\"]([^'\"]+)['\"]/u)
+  const match = versionText.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)
   const record = fileText(root, '版本记录.md')
   return match !== null && record.includes(match[1]) ? result(true, `version ${match[1]} is recorded`) : result(false, 'APP_VERSION is missing from 版本记录.md')
 }
