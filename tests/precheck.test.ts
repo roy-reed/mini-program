@@ -43,10 +43,14 @@ describe('precheck helpers', () => {
     expect(checkManifest(valid).ok).toBe(true)
     expect(checkManifest(manifestWithBase('http://cdn.example.com/shared-chord')).ok).toBe(false)
     expect(checkManifest(FIXTURE_MANIFEST).ok).toBe(false)
-    expect(checkManifest({ ...valid, base: `${valid.base}/` }).ok).toBe(false)
+    expect(checkManifest(manifestWithBase(`${valid.base}/`)).ok).toBe(false)
     expect(checkManifest({ ...valid, version: 0 }).ok).toBe(false)
-    expect(checkManifest({ ...valid, videos: [valid.videos[0]] }).ok).toBe(false)
-    expect(checkManifest({ ...valid, audios: [valid.audios[0]] }).ok).toBe(false)
+    const oneVideo = valid.videos[0]
+    const oneVideoCombos = Object.fromEntries(Object.entries(valid.combos).filter(([key]) => key.startsWith(`${oneVideo.id}__`)))
+    expect(checkManifest({ ...valid, videos: [oneVideo], combos: oneVideoCombos }).ok).toBe(false)
+    const oneAudio = valid.audios[0]
+    const oneAudioCombos = Object.fromEntries(Object.entries(valid.combos).filter(([, combo]) => combo.audioId === oneAudio.id))
+    expect(checkManifest({ ...valid, audios: [oneAudio], combos: oneAudioCombos }).ok).toBe(false)
   })
 
   it('detects and clears placeholders, forbidden APIs, and unmuted autoplay', () => {
