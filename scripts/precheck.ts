@@ -30,6 +30,7 @@ export function checkManifest(manifest: Manifest): CheckResult {
   const base = typeof manifest.base === 'string' ? manifest.base : ''
   if (!base.startsWith('https://') && !base.startsWith('cloud://')) problems.push('manifest base must start with https:// or cloud://')
   if (base.endsWith('/')) problems.push('manifest base must not end with /')
+  if (/(?:^|\/)v\d+(?:\/|$)/iu.test(base)) problems.push('manifest base must not include a version segment such as /v1')
   if (base.includes('example.invalid')) problems.push('manifest base still uses example.invalid')
   if (manifest.version < 1) problems.push('manifest version must be at least 1')
   if (manifest.videos.length < 2 || manifest.audios.length < 2) problems.push('manifest needs at least two videos and two audios')
