@@ -54,6 +54,9 @@ function requireBase(base: string | undefined): string {
   if (!base || (!base.startsWith('https://') && !base.startsWith('cloud://')) || base.endsWith('/')) {
     throw new Error('--base must start with https:// or cloud:// and must not end with /')
   }
+  if (/(?:^|\/)v\d+(?:\/|$)/iu.test(base)) {
+    throw new Error('--base must be a root without a version segment (do not include /v1)')
+  }
   return base
 }
 
