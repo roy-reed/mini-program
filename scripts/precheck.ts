@@ -28,7 +28,7 @@ export function checkPages(app: unknown): CheckResult {
 export function checkManifest(manifest: Manifest): CheckResult {
   const problems = validateManifest(manifest)
   const base = typeof manifest.base === 'string' ? manifest.base : ''
-  if (!base.startsWith('https://')) problems.push('manifest base must start with https://')
+  if (!base.startsWith('https://') && !base.startsWith('cloud://')) problems.push('manifest base must start with https:// or cloud://')
   if (base.endsWith('/')) problems.push('manifest base must not end with /')
   if (base.includes('example.invalid')) problems.push('manifest base still uses example.invalid')
   if (manifest.version < 1) problems.push('manifest version must be at least 1')
@@ -102,14 +102,36 @@ export function checkVersion(root: string): CheckResult {
 export async function checkOnlineAssets(manifest: Manifest, fetcher: typeof fetch = fetch): Promise<CheckResult> {
   const entries = Object.values(manifest.combos).flatMap((combo) => [{ url: combo.url, type: 'video/mp4' }, { url: combo.posterUrl, type: 'image/jpeg' }])
   const failures: string[] = []
+  const skippedCloud: string[] = []
+  const cloudFileIdPattern = /^cloud:\/\/[^/]+\.[^/]+\/.+$/u
+  const httpUrlPattern = /^https?:\/\//u
+
   for (const entry of entries) {
+    if (entry.url.startsWith('cloud://')) {
+      if (!cloudFileIdPattern.test(entry.url)) failures.push(`${entry.url}: invalid CloudBase file ID (expected cloud://<env>.<bucket>/<path>)`)
+      else skippedCloud.push(entry.url)
+      continue
+    }
+    if (!httpUrlPattern.test(entry.url)) {
+      failures.push(`${entry.url}: only http(s) and cloud:// URLs are supported`)
+      continue
+    }
     try {
       const response = await fetcher(entry.url, { method: 'HEAD' })
       const contentType = response.headers.get('content-type') ?? ''
       if (!response.ok || !contentType.toLowerCase().includes(entry.type)) failures.push(`${entry.url}: ${response.status} ${contentType}`)
     } catch (error) { failures.push(`${entry.url}: ${error instanceof Error ? error.message : String(error)}`) }
   }
-  return failures.length === 0 ? result(true, 'online assets are reachable') : result(false, failures.join('; '))
+
+  const warnings = skippedCloud.length > 0
+    ? [`skipped HEAD for ${skippedCloud.length} cloud:// assets; file ID format was checked only, verify playback in WeChat`]
+    : []
+  const message = failures.length > 0
+    ? failures.join('; ')
+    : skippedCloud.length > 0
+      ? `HTTP(S) assets are reachable; skipped HEAD for ${skippedCloud.length} CloudBase asset(s)`
+      : 'online assets are reachable'
+  return result(failures.length === 0, message, warnings)
 }
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url)
