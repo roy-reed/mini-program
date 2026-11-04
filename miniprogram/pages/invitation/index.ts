@@ -144,8 +144,9 @@ Page({
   },
 
   startLoadTimer() {
-    if (this.loadTimer !== null) return
+    if (this.loadTimer !== null || !this.visible) return
     this.loadTimer = setTimeout(() => {
+      this.loadTimer = null
       if (this.data.env === 'open' && this.data.status === 'loading' && this.visible) {
         console.error('invitation video loading timed out')
         this.setData({ status: 'error' })
