@@ -18,6 +18,8 @@ describe('CloudBase manifest support', () => {
 
     expect(checkManifest(manifest).ok).toBe(true)
     expect(checkManifest(manifestWithBase(`${manifest.base}/`)).ok).toBe(false)
+    expect(checkManifest(manifestWithBase('cloud://dtsharedchord-d3gz0n9ft379ec6f2.test-bucket/v1')).ok).toBe(false)
+    expect(checkManifest(manifestWithBase('https://cdn.example.com/shared-chord/v1')).ok).toBe(false)
   })
 
   it('validates cloud file ID shape and explicitly skips HEAD requests', async () => {
