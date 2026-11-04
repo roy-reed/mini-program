@@ -144,7 +144,7 @@ Page({
   },
 
   startLoadTimer() {
-    if (this.loadTimer !== null) clearTimeout(this.loadTimer)
+    if (this.loadTimer !== null) return
     this.loadTimer = setTimeout(() => {
       if (this.data.env === 'open' && this.data.status === 'loading' && this.visible) {
         console.error('invitation video loading timed out')
@@ -201,6 +201,7 @@ Page({
   },
 
   onVideoPlay() {
+    if (this.data.env !== 'open') return
     if (this.loadTimer !== null) clearTimeout(this.loadTimer)
     this.loadTimer = null
     this.wasPlaying = true
@@ -208,8 +209,9 @@ Page({
   },
 
   onVideoWaiting() {
+    if (this.data.env !== 'open' || !this.visible) return
     this.setData({ status: 'loading' })
-    if (this.visible) this.startLoadTimer()
+    this.startLoadTimer()
   },
 
   onVideoError(event: WechatMiniprogram.VideoError) {
@@ -219,7 +221,7 @@ Page({
   },
 
   onTimeUpdate(event: WechatMiniprogram.VideoTimeUpdate) {
-    if (this.timeline === null) return
+    if (this.timeline === null || this.data.env !== 'open') return
     if (this.loadTimer !== null) clearTimeout(this.loadTimer)
     this.loadTimer = null
     const state = stateAt(this.timeline, event.detail.currentTime * 1000)
@@ -231,6 +233,7 @@ Page({
 
   onRetry() {
     if (this.data.env !== 'open') return
+    this.mediaRequestId += 1
     this.clearPlayerTimers()
     this.playRequested = false
     this.mediaError = false
@@ -255,8 +258,10 @@ Page({
     this.visible = true
     if (!this.data.ready) return
     this.refreshName()
-    if (this.data.env === 'open' && this.wasPlaying && this.videoCtx !== null) this.videoCtx.play()
-    else if (this.data.env === 'open' && this.data.status === 'loading') {
+    if (this.data.env === 'open' && (this.wasPlaying || this.playRequested) && this.videoCtx !== null) {
+      this.videoCtx.play()
+      if (this.data.status === 'loading') this.startLoadTimer()
+    } else if (this.data.env === 'open' && this.data.status === 'loading') {
       this.startLoadTimer()
       this.schedulePlay()
     }
