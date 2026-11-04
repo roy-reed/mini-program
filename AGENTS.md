@@ -46,7 +46,7 @@
 
 ## 硬规则
 
-1. **Demo 不做后端**：不用 `wx.request`、`wx.uploadFile`、`wx.downloadFile`、`wx.connectSocket`、`wx.login`、`wx.cloud`；代码里不出现服务器地址。视频只通过 `<video src>` 播放 `data/manifest.ts` 里的 https 地址。
+1. **Demo 不做业务后端，仅允许一次 CloudBase 初始化**：只允许在 `miniprogram/app.ts` 的 `onLaunch` 中调用一次 `wx.cloud.init({ env })`，`env` 固定为 `dtsharedchord-d3gz0n9ft379ec6f2`；其他任何文件或其他 `wx.cloud` API 一律禁止。仍禁止 `wx.request`、`wx.uploadFile`、`wx.downloadFile`、`wx.connectSocket`、`wx.login`；代码里不出现服务器地址。视频只通过 `<video src>` 播放 `data/manifest.ts` 里的 HTTPS 地址或 CloudBase `cloud://` 文件 ID。
 2. **唯一的隐私相关能力是 `<input type="nickname">`**。不调用其他隐私接口（`getUserProfile`、`getUserInfo`、相册、位置、剪贴板、手机号等）。
 3. **界面文字只来自 `core/copy.ts`**：页面把 `COPY` 放进 data，在 wxml 里用 `{{copy.组.键}}`；带变量的句子在 ts 里用 `t()` / `fill()` 拼好再 setData。`pages/` 和 `components/` 的 `.ts`、`.wxml` 里不出现中文字符（注释除外，`console` 日志用英文）。页面标题写在页面 `.json` 的 `navigationBarTitleText`（唯一例外）。
 4. **素材数据只来自 `miniprogram/data/manifest.ts`**，它由 `npm run assets -- manifest` 生成，禁止手改。

@@ -28,8 +28,9 @@ export function checkPages(app: unknown): CheckResult {
 export function checkManifest(manifest: Manifest): CheckResult {
   const problems = validateManifest(manifest)
   const base = typeof manifest.base === 'string' ? manifest.base : ''
-  if (!base.startsWith('https://')) problems.push('manifest base must start with https://')
+  if (!base.startsWith('https://') && !base.startsWith('cloud://')) problems.push('manifest base must start with https:// or cloud://')
   if (base.endsWith('/')) problems.push('manifest base must not end with /')
+  if (/(?:^|\/)v\d+(?:\/|$)/iu.test(base)) problems.push('manifest base must not include a version segment such as /v1')
   if (base.includes('example.invalid')) problems.push('manifest base still uses example.invalid')
   if (manifest.version < 1) problems.push('manifest version must be at least 1')
   if (manifest.videos.length < 2 || manifest.audios.length < 2) problems.push('manifest needs at least two videos and two audios')
@@ -47,7 +48,9 @@ export function checkPlaceholders(root: string): CheckResult {
   return found.length === 0 ? result(true, 'no placeholders remain') : result(false, `placeholders remain in ${found.join(', ')}`)
 }
 
-const FORBIDDEN_APIS = ['wx.request', 'wx.downloadFile', 'wx.uploadFile', 'wx.connectSocket', 'wx.login', 'wx.cloud', 'getUserProfile', 'getUserInfo', 'wx.getLocation', 'wx.chooseMedia', 'wx.chooseImage', 'saveVideoToPhotosAlbum', 'setClipboardData']
+const FORBIDDEN_APIS = ['wx.request', 'wx.downloadFile', 'wx.uploadFile', 'wx.connectSocket', 'wx.login', 'getUserProfile', 'getUserInfo', 'wx.getLocation', 'wx.chooseMedia', 'wx.chooseImage', 'saveVideoToPhotosAlbum', 'setClipboardData']
+const CLOUD_INIT_PATTERN = /wx\.cloud\.init\s*\(\s*\{\s*env\s*\}\s*\)/gu
+const CLOUD_REFERENCE_PATTERN = /\bwx\s*\.\s*cloud\b/gu
 
 function walkFiles(root: string): string[] {
   if (!existsSync(root)) return []
@@ -62,11 +65,24 @@ function walkFiles(root: string): string[] {
 
 export function checkForbiddenApis(root: string): CheckResult {
   const hits: string[] = []
+  let appFileFound = false
+  let cloudInitCount = 0
   for (const file of walkFiles(join(root, 'miniprogram')).filter((path) => path.endsWith('.ts'))) {
     const text = readFileSync(file, 'utf8')
-    for (const api of FORBIDDEN_APIS) if (text.includes(api)) hits.push(`${relative(root, file)} contains ${api}`)
+    const relativePath = relative(root, file).replace(/\\/gu, '/')
+    for (const api of FORBIDDEN_APIS) if (text.includes(api)) hits.push(`${relativePath} contains ${api}`)
+
+    const isAppFile = relativePath === 'miniprogram/app.ts'
+    if (isAppFile) appFileFound = true
+    const allowedInitMatches = isAppFile ? text.match(CLOUD_INIT_PATTERN) ?? [] : []
+    cloudInitCount += allowedInitMatches.length
+    const remaining = isAppFile ? text.replace(CLOUD_INIT_PATTERN, '') : text
+    if ((remaining.match(CLOUD_REFERENCE_PATTERN) ?? []).length > 0) {
+      hits.push(`${relativePath} contains wx.cloud outside the single allowed app.ts initialization`)
+    }
   }
-  return hits.length === 0 ? result(true, 'no forbidden APIs found') : result(false, hits.join('; '))
+  if (appFileFound && cloudInitCount !== 1) hits.push(`miniprogram/app.ts must contain exactly one wx.cloud.init({ env }) call (found ${cloudInitCount})`)
+  return hits.length === 0 ? result(true, 'no forbidden APIs found; CloudBase initialization is restricted to app.ts') : result(false, hits.join('; '))
 }
 
 export function checkAutoplayMuted(root: string): CheckResult {
@@ -102,14 +118,40 @@ export function checkVersion(root: string): CheckResult {
 export async function checkOnlineAssets(manifest: Manifest, fetcher: typeof fetch = fetch): Promise<CheckResult> {
   const entries = Object.values(manifest.combos).flatMap((combo) => [{ url: combo.url, type: 'video/mp4' }, { url: combo.posterUrl, type: 'image/jpeg' }])
   const failures: string[] = []
+  const skippedCloud: string[] = []
+  let httpCheckedCount = 0
+  const cloudFileIdPattern = /^cloud:\/\/[^/]+\.[^/]+\/.+$/u
+  const httpUrlPattern = /^https?:\/\//u
+
   for (const entry of entries) {
+    if (entry.url.startsWith('cloud://')) {
+      if (!cloudFileIdPattern.test(entry.url)) failures.push(`${entry.url}: invalid CloudBase file ID (expected cloud://<env>.<bucket>/<path>)`)
+      else skippedCloud.push(entry.url)
+      continue
+    }
+    if (!httpUrlPattern.test(entry.url)) {
+      failures.push(`${entry.url}: only http(s) and cloud:// URLs are supported`)
+      continue
+    }
+    httpCheckedCount += 1
     try {
       const response = await fetcher(entry.url, { method: 'HEAD' })
       const contentType = response.headers.get('content-type') ?? ''
       if (!response.ok || !contentType.toLowerCase().includes(entry.type)) failures.push(`${entry.url}: ${response.status} ${contentType}`)
     } catch (error) { failures.push(`${entry.url}: ${error instanceof Error ? error.message : String(error)}`) }
   }
-  return failures.length === 0 ? result(true, 'online assets are reachable') : result(false, failures.join('; '))
+
+  const warnings = skippedCloud.length > 0
+    ? [`skipped HEAD for ${skippedCloud.length} cloud:// assets; file ID format was checked only, verify playback in WeChat`]
+    : []
+  const message = failures.length > 0
+    ? failures.join('; ')
+    : skippedCloud.length > 0 && httpCheckedCount > 0
+      ? `HTTP(S) assets are reachable; skipped HEAD for ${skippedCloud.length} CloudBase asset(s)`
+      : skippedCloud.length > 0
+        ? `skipped HEAD for ${skippedCloud.length} CloudBase asset(s); file ID format was checked only`
+        : 'online assets are reachable'
+  return result(failures.length === 0, message, warnings)
 }
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url)
