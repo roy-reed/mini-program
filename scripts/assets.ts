@@ -51,7 +51,9 @@ function parseOptions(args: string[]): { command: string; base?: string; library
 }
 
 function requireBase(base: string | undefined): string {
-  if (!base || !base.startsWith('https://') || base.endsWith('/')) throw new Error('--base must start with https:// and must not end with /')
+  if (!base || (!base.startsWith('https://') && !base.startsWith('cloud://')) || base.endsWith('/')) {
+    throw new Error('--base must start with https:// or cloud:// and must not end with /')
+  }
   return base
 }
 
@@ -162,7 +164,7 @@ async function render(context: Context, library: Library): Promise<void> {
   writeCache(cachePath, cache)
   writeFileSync(join(context.distRoot, 'report.json'), `${JSON.stringify(rows, null, 2)}\n`)
   console.table(rows)
-  console.log(`把 dist-assets/v${library.version} 上传到 COS 的 shared-chord/ 目录`)
+  console.log(`把 dist-assets/v${library.version} 上传到云存储根目录，保留 v${library.version}/combos/ 与 v${library.version}/posters/ 目录结构`)
 }
 
 function buildManifest(library: Library, base: string): void {
