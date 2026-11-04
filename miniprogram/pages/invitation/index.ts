@@ -6,6 +6,7 @@ import { stateAt, buildTimeline, type Timeline } from '../../core/timeline'
 import { MANIFEST } from '../../data/manifest'
 import { currentEntry, goEntry, PAGES } from '../../services/nav'
 import { loadInvitation, loadProfile } from '../../services/store'
+import { resolveMediaSources } from '../../services/media'
 
 type EnvelopeState = 'closed' | 'opening' | 'open' | 'closing'
 type PlayerStatus = 'idle' | 'loading' | 'playing' | 'error'
@@ -62,6 +63,15 @@ Page({
   wasPlaying: false,
   openTimer: null as ReturnType<typeof setTimeout> | null,
   closeTimer: null as ReturnType<typeof setTimeout> | null,
+  playTimer: null as ReturnType<typeof setTimeout> | null,
+  loadTimer: null as ReturnType<typeof setTimeout> | null,
+  sourceVideoUrl: '',
+  sourcePosterUrl: '',
+  mediaRequestId: 0,
+  mediaError: false,
+  playRequested: false,
+  disposed: false,
+  visible: true,
 
   async onLoad(query: PageQuery) {
     const decision = await currentEntry()
@@ -76,10 +86,12 @@ Page({
     const windowInfo = wx.getWindowInfo()
     const playerLayout = layoutFor(windowInfo.windowWidth, windowInfo.windowHeight)
     this.timeline = buildTimeline({ audioMs: combo.playMs, loopMs: combo.loopMs })
+    this.sourceVideoUrl = combo.url
+    this.sourcePosterUrl = combo.posterUrl
     this.setData({
       ready: true,
-      videoUrl: combo.url,
-      posterUrl: combo.posterUrl,
+      videoUrl: '',
+      posterUrl: '',
       nameColor: video.textColor,
       nameTopPct: MANIFEST.layout.nameTopPct,
       playerWidthRpx: playerLayout.playerWidthRpx,
@@ -90,6 +102,7 @@ Page({
       aiNotice: video.aiGenerated,
     }, () => {
       this.refreshName()
+      void this.prepareMedia()
       if (query.autoOpen === '1') this.open()
     })
   },
@@ -105,18 +118,75 @@ Page({
     })
   },
 
+  async prepareMedia() {
+    const requestId = ++this.mediaRequestId
+    try {
+      const sources = await resolveMediaSources(this.sourceVideoUrl, this.sourcePosterUrl)
+      if (this.disposed || requestId !== this.mediaRequestId) return
+      this.mediaError = false
+      this.setData({ videoUrl: sources.videoUrl, posterUrl: sources.posterUrl }, () => {
+        this.schedulePlay()
+      })
+    } catch (error) {
+      if (this.disposed || requestId !== this.mediaRequestId) return
+      console.error('invitation media resolution failed', error instanceof Error ? error.message : String(error))
+      this.mediaError = true
+      this.clearPlayerTimers()
+      this.setData({ status: 'error' })
+    }
+  },
+
+  clearPlayerTimers() {
+    if (this.playTimer !== null) clearTimeout(this.playTimer)
+    if (this.loadTimer !== null) clearTimeout(this.loadTimer)
+    this.playTimer = null
+    this.loadTimer = null
+  },
+
+  startLoadTimer() {
+    if (this.loadTimer !== null || !this.visible) return
+    this.loadTimer = setTimeout(() => {
+      this.loadTimer = null
+      if (this.data.env === 'open' && this.data.status === 'loading' && this.visible) {
+        console.error('invitation video loading timed out')
+        this.setData({ status: 'error' })
+      }
+    }, 12000)
+  },
+
+  requestPlay() {
+    if (this.playRequested || !this.visible || this.data.env !== 'open' || !this.data.showVideo || !this.data.videoUrl || this.mediaError) return
+    if (this.playTimer !== null) clearTimeout(this.playTimer)
+    this.playTimer = null
+    this.playRequested = true
+    this.videoCtx = wx.createVideoContext('player', this)
+    this.videoCtx.play()
+  },
+
+  schedulePlay() {
+    if (this.playRequested || !this.visible || this.data.env !== 'open' || !this.data.showVideo || !this.data.videoUrl || this.mediaError) return
+    if (this.playTimer !== null) clearTimeout(this.playTimer)
+    this.playTimer = setTimeout(() => this.requestPlay(), 800)
+  },
+
   open() {
     if (this.data.env !== 'closed') return
     this.setData({ env: 'opening' })
     this.openTimer = setTimeout(() => {
-      this.setData({ env: 'open', showVideo: true, status: 'loading', nameOpacity: 0 }, () => {
-        this.videoCtx = wx.createVideoContext('player', this)
-        this.videoCtx.play()
+      this.playRequested = false
+      this.setData({ env: 'open', showVideo: true, status: this.mediaError ? 'error' : 'loading', nameOpacity: 0 }, () => {
+        if (!this.mediaError) {
+          this.startLoadTimer()
+          this.schedulePlay()
+        }
       })
     }, ENVELOPE_ANIM_MS)
   },
 
   close() {
+    this.clearPlayerTimers()
+    this.playRequested = false
+    this.wasPlaying = false
     if (this.videoCtx !== null) this.videoCtx.stop()
     this.setData({ showVideo: false, status: 'idle', nameOpacity: 0, env: 'closing' })
     this.closeTimer = setTimeout(() => this.setData({ env: 'closed' }), ENVELOPE_ANIM_MS)
@@ -127,21 +197,34 @@ Page({
     else if (this.data.env === 'open') this.close()
   },
 
+  onVideoLoaded() {
+    this.requestPlay()
+  },
+
   onVideoPlay() {
+    if (this.data.env !== 'open') return
+    if (this.loadTimer !== null) clearTimeout(this.loadTimer)
+    this.loadTimer = null
+    this.wasPlaying = true
     this.setData({ status: 'playing' })
   },
 
   onVideoWaiting() {
+    if (this.data.env !== 'open' || !this.visible) return
     this.setData({ status: 'loading' })
+    this.startLoadTimer()
   },
 
   onVideoError(event: WechatMiniprogram.VideoError) {
     console.error('invitation video error', event.detail)
+    this.clearPlayerTimers()
     this.setData({ status: 'error' })
   },
 
   onTimeUpdate(event: WechatMiniprogram.VideoTimeUpdate) {
-    if (this.timeline === null) return
+    if (this.timeline === null || this.data.env !== 'open') return
+    if (this.loadTimer !== null) clearTimeout(this.loadTimer)
+    this.loadTimer = null
     const state = stateAt(this.timeline, event.detail.currentTime * 1000)
     const opacity = Math.round(state.opacity * 50) / 50
     if (Math.abs(opacity - this.data.nameOpacity) >= 0.02 || this.data.status !== 'playing') {
@@ -150,10 +233,16 @@ Page({
   },
 
   onRetry() {
-    this.setData({ showVideo: false }, () => {
-      this.setData({ showVideo: true, status: 'loading' }, () => {
-        this.videoCtx = wx.createVideoContext('player', this)
-        this.videoCtx.play()
+    if (this.data.env !== 'open') return
+    this.mediaRequestId += 1
+    this.clearPlayerTimers()
+    this.playRequested = false
+    this.mediaError = false
+    if (this.videoCtx !== null) this.videoCtx.stop()
+    this.setData({ showVideo: false, videoUrl: '', posterUrl: '', status: 'loading', nameOpacity: 0 }, () => {
+      this.setData({ showVideo: true }, () => {
+        this.startLoadTimer()
+        void this.prepareMedia()
       })
     })
   },
@@ -167,12 +256,21 @@ Page({
   },
 
   onShow() {
+    this.visible = true
     if (!this.data.ready) return
     this.refreshName()
-    if (this.data.env === 'open' && this.wasPlaying && this.videoCtx !== null) this.videoCtx.play()
+    if (this.data.env === 'open' && (this.wasPlaying || this.playRequested) && this.videoCtx !== null) {
+      this.videoCtx.play()
+      if (this.data.status === 'loading') this.startLoadTimer()
+    } else if (this.data.env === 'open' && this.data.status === 'loading') {
+      this.startLoadTimer()
+      this.schedulePlay()
+    }
   },
 
   onHide() {
+    this.visible = false
+    this.clearPlayerTimers()
     if (this.data.env === 'open' && this.videoCtx !== null) {
       this.wasPlaying = this.data.status === 'playing'
       this.videoCtx.pause()
@@ -180,6 +278,9 @@ Page({
   },
 
   onUnload() {
+    this.disposed = true
+    this.mediaRequestId += 1
+    this.clearPlayerTimers()
     if (this.openTimer !== null) clearTimeout(this.openTimer)
     if (this.closeTimer !== null) clearTimeout(this.closeTimer)
     if (this.videoCtx !== null) this.videoCtx.stop()

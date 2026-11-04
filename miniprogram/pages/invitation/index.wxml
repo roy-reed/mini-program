@@ -5,7 +5,7 @@
   </view>
   <envelope state="{{env}}" to-text="{{toText}}" open-hint="{{copy.inv.tapToOpen}}" close-hint="{{copy.inv.tapToClose}}" poster-url="{{posterUrl}}" width-rpx="{{playerWidthRpx}}" height-rpx="{{playerHeightRpx}}" duration-ms="{{envelopeMs}}" bind:toggle="onToggleEnvelope">
     <view class="player" style="width:{{playerWidthRpx}}rpx;height:{{playerHeightRpx}}rpx">
-      <video wx:if="{{showVideo}}" id="player" class="video" src="{{videoUrl}}" poster="{{posterUrl}}" loop controls="{{false}}" show-center-play-btn="{{false}}" show-play-btn="{{false}}" show-fullscreen-btn="{{false}}" show-progress="{{false}}" enable-progress-gesture="{{false}}" object-fit="cover" bindplay="onVideoPlay" bindwaiting="onVideoWaiting" binderror="onVideoError" bindtimeupdate="onTimeUpdate"></video>
+      <video wx:if="{{showVideo && videoUrl}}" id="player" class="video" src="{{videoUrl}}" poster="{{posterUrl}}" loop controls="{{false}}" show-center-play-btn="{{false}}" show-play-btn="{{false}}" show-fullscreen-btn="{{false}}" show-progress="{{false}}" enable-progress-gesture="{{false}}" object-fit="cover" bindloadedmetadata="onVideoLoaded" bindplay="onVideoPlay" bindwaiting="onVideoWaiting" binderror="onVideoError" bindtimeupdate="onTimeUpdate"></video>
       <view class="name" style="top:{{nameTopPct * 100}}%;color:{{nameColor}};font-size:{{nameFontRpx}}rpx;opacity:{{nameOpacity}}">{{inviteText}}</view>
       <view wx:if="{{status === 'loading'}}" class="state">{{copy.inv.loading}}</view>
       <view wx:if="{{status === 'error'}}" class="state state--error">

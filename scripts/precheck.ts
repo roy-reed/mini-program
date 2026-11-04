@@ -50,6 +50,7 @@ export function checkPlaceholders(root: string): CheckResult {
 
 const FORBIDDEN_APIS = ['wx.request', 'wx.downloadFile', 'wx.uploadFile', 'wx.connectSocket', 'wx.login', 'getUserProfile', 'getUserInfo', 'wx.getLocation', 'wx.chooseMedia', 'wx.chooseImage', 'saveVideoToPhotosAlbum', 'setClipboardData']
 const CLOUD_INIT_PATTERN = /wx\.cloud\.init\s*\(\s*\{\s*env\s*\}\s*\)/gu
+const CLOUD_MEDIA_PATTERN = /wx\.cloud\.getTempFileURL\s*\(/gu
 const CLOUD_REFERENCE_PATTERN = /\bwx\s*\.\s*cloud\b/gu
 
 function walkFiles(root: string): string[] {
@@ -67,6 +68,8 @@ export function checkForbiddenApis(root: string): CheckResult {
   const hits: string[] = []
   let appFileFound = false
   let cloudInitCount = 0
+  let mediaFileFound = false
+  let mediaCallCount = 0
   for (const file of walkFiles(join(root, 'miniprogram')).filter((path) => path.endsWith('.ts'))) {
     const text = readFileSync(file, 'utf8')
     const relativePath = relative(root, file).replace(/\\/gu, '/')
@@ -74,15 +77,21 @@ export function checkForbiddenApis(root: string): CheckResult {
 
     const isAppFile = relativePath === 'miniprogram/app.ts'
     if (isAppFile) appFileFound = true
+    const isMediaFile = relativePath === 'miniprogram/services/media.ts'
+    if (isMediaFile) mediaFileFound = true
     const allowedInitMatches = isAppFile ? text.match(CLOUD_INIT_PATTERN) ?? [] : []
+    const allowedMediaMatches = isMediaFile ? text.match(CLOUD_MEDIA_PATTERN) ?? [] : []
     cloudInitCount += allowedInitMatches.length
-    const remaining = isAppFile ? text.replace(CLOUD_INIT_PATTERN, '') : text
+    mediaCallCount += allowedMediaMatches.length
+    const withoutInit = isAppFile ? text.replace(CLOUD_INIT_PATTERN, '') : text
+    const remaining = isMediaFile ? withoutInit.replace(CLOUD_MEDIA_PATTERN, '') : withoutInit
     if ((remaining.match(CLOUD_REFERENCE_PATTERN) ?? []).length > 0) {
       hits.push(`${relativePath} contains wx.cloud outside the single allowed app.ts initialization`)
     }
   }
   if (appFileFound && cloudInitCount !== 1) hits.push(`miniprogram/app.ts must contain exactly one wx.cloud.init({ env }) call (found ${cloudInitCount})`)
-  return hits.length === 0 ? result(true, 'no forbidden APIs found; CloudBase initialization is restricted to app.ts') : result(false, hits.join('; '))
+  if (mediaFileFound && mediaCallCount !== 1) hits.push(`miniprogram/services/media.ts must contain exactly one wx.cloud.getTempFileURL call (found ${mediaCallCount})`)
+  return hits.length === 0 ? result(true, 'no forbidden APIs found; CloudBase use is restricted to app.ts init and media.ts getTempFileURL') : result(false, hits.join('; '))
 }
 
 export function checkAutoplayMuted(root: string): CheckResult {
