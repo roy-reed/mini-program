@@ -65,6 +65,7 @@ function walkFiles(root: string): string[] {
 
 export function checkForbiddenApis(root: string): CheckResult {
   const hits: string[] = []
+  let appFileFound = false
   let cloudInitCount = 0
   for (const file of walkFiles(join(root, 'miniprogram')).filter((path) => path.endsWith('.ts'))) {
     const text = readFileSync(file, 'utf8')
@@ -72,6 +73,7 @@ export function checkForbiddenApis(root: string): CheckResult {
     for (const api of FORBIDDEN_APIS) if (text.includes(api)) hits.push(`${relativePath} contains ${api}`)
 
     const isAppFile = relativePath === 'miniprogram/app.ts'
+    if (isAppFile) appFileFound = true
     const allowedInitMatches = isAppFile ? text.match(CLOUD_INIT_PATTERN) ?? [] : []
     cloudInitCount += allowedInitMatches.length
     const remaining = isAppFile ? text.replace(CLOUD_INIT_PATTERN, '') : text
@@ -79,8 +81,8 @@ export function checkForbiddenApis(root: string): CheckResult {
       hits.push(`${relativePath} contains wx.cloud outside the single allowed app.ts initialization`)
     }
   }
-  if (cloudInitCount !== 1) hits.push(`miniprogram/app.ts must contain exactly one wx.cloud.init({ env }) call (found ${cloudInitCount})`)
-  return hits.length === 0 ? result(true, 'no forbidden APIs found; one app.ts CloudBase initialization is allowed') : result(false, hits.join('; '))
+  if (appFileFound && cloudInitCount !== 1) hits.push(`miniprogram/app.ts must contain exactly one wx.cloud.init({ env }) call (found ${cloudInitCount})`)
+  return hits.length === 0 ? result(true, 'no forbidden APIs found; CloudBase initialization is restricted to app.ts') : result(false, hits.join('; '))
 }
 
 export function checkAutoplayMuted(root: string): CheckResult {
