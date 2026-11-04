@@ -119,6 +119,7 @@ export async function checkOnlineAssets(manifest: Manifest, fetcher: typeof fetc
   const entries = Object.values(manifest.combos).flatMap((combo) => [{ url: combo.url, type: 'video/mp4' }, { url: combo.posterUrl, type: 'image/jpeg' }])
   const failures: string[] = []
   const skippedCloud: string[] = []
+  let httpCheckedCount = 0
   const cloudFileIdPattern = /^cloud:\/\/[^/]+\.[^/]+\/.+$/u
   const httpUrlPattern = /^https?:\/\//u
 
@@ -132,6 +133,7 @@ export async function checkOnlineAssets(manifest: Manifest, fetcher: typeof fetc
       failures.push(`${entry.url}: only http(s) and cloud:// URLs are supported`)
       continue
     }
+    httpCheckedCount += 1
     try {
       const response = await fetcher(entry.url, { method: 'HEAD' })
       const contentType = response.headers.get('content-type') ?? ''
@@ -144,9 +146,11 @@ export async function checkOnlineAssets(manifest: Manifest, fetcher: typeof fetc
     : []
   const message = failures.length > 0
     ? failures.join('; ')
-    : skippedCloud.length > 0
+    : skippedCloud.length > 0 && httpCheckedCount > 0
       ? `HTTP(S) assets are reachable; skipped HEAD for ${skippedCloud.length} CloudBase asset(s)`
-      : 'online assets are reachable'
+      : skippedCloud.length > 0
+        ? `skipped HEAD for ${skippedCloud.length} CloudBase asset(s); file ID format was checked only`
+        : 'online assets are reachable'
   return result(failures.length === 0, message, warnings)
 }
 
