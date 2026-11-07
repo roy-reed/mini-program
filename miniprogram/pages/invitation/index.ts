@@ -233,6 +233,11 @@ Page({
     if (this.data.status === 'loading' && !this.mediaError) this.requestPlay(true)
   },
 
+  onTapPlay() {
+    if (this.data.status !== 'loading' || !this.data.videoUrl || this.mediaError) return
+    this.requestPlay(true)
+  },
+
   onVideoPlay() {
     if (this.data.env !== 'open' || this.mediaError || this.data.status === 'error') return
     this.clearPlayerTimers()
@@ -250,7 +255,7 @@ Page({
   },
 
   onVideoError(event: WechatMiniprogram.VideoError) {
-    if (this.data.env !== 'open' || !this.data.showVideo) return
+    if (this.data.env !== 'open' || !this.data.showVideo || this.mediaError) return
     this.showLoadError(JSON.stringify(event.detail))
   },
 
@@ -271,10 +276,11 @@ Page({
     this.clearPlayerTimers()
     this.playRequested = false
     this.hasStarted = false
-    this.mediaError = false
+    this.mediaError = true
     if (this.videoCtx !== null) this.videoCtx.stop()
     this.videoCtx = null
     this.setData({ showVideo: false, videoUrl: '', status: 'loading', slowLoading: false, nameOpacity: 0 }, () => {
+      this.mediaError = false
       this.setData({ showVideo: true }, () => {
         this.startLoadTimer()
         this.startSlowHint()
