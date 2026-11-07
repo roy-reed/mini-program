@@ -39,7 +39,14 @@ export async function resolveCloudUrls(urls: string[]): Promise<string[]> {
 }
 
 export async function resolveMediaSources(videoUrl: string, posterUrl: string): Promise<MediaSources> {
-  if (!videoUrl) return { videoUrl: '', posterUrl: posterUrl.startsWith('https://') ? posterUrl : '', videoError: 'video source is empty' }
+  if (!videoUrl) {
+    const posterResults = await cloudFileResults([posterUrl])
+    return {
+      videoUrl: '',
+      posterUrl: resolveOneCloudUrl(posterUrl, posterResults) ?? '',
+      videoError: 'video source is empty',
+    }
+  }
 
   const results = await cloudFileResults([videoUrl, posterUrl])
   const resolvedVideo = resolveOneCloudUrl(videoUrl, results)
