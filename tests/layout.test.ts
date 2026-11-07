@@ -31,7 +31,7 @@ const deviceViewports = [
   ['HUAWEI nova 13', 361, 804],
   ['HUAWEI nova 14 Ultra', 363, 817],
   ['HUAWEI Pocket 2', 364, 861],
-  ['HUAWEI Pura X inner', 940, 665],
+  ['HUAWEI Pura X inner', 440, 907],
   ['HUAWEI Pura X outer', 327, 327],
   ['HUAWEI Pura X Max inner', 940, 665],
   ['HUAWEI Pura X Max outer', 460, 672],
