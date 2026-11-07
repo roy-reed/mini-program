@@ -289,10 +289,6 @@ Page({
     })
   },
 
-  onChangeInvitation() {
-    wx.redirectTo({ url: `${PAGES.draw}?choose=1` })
-  },
-
   onChangeName() {
     wx.navigateTo({ url: `${PAGES.login}?edit=1` })
   },
