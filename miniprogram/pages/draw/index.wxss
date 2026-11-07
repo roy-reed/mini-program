@@ -1,5 +1,5 @@
 .draw-page { position: relative; display: flex; flex-direction: column; align-items: center; overflow: hidden; text-align: center; background: var(--sc-paper-white); }
-.memory-scene { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: .6; }
+.memory-scene { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; opacity: .6; }
 .draw-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; width: 100%; max-width: 680rpx; margin: 0 auto; padding-top: 55rpx; }
 .draw-title { box-sizing: border-box; width: 100%; margin-bottom: 18rpx; padding: 22rpx 16rpx; border-top: 2rpx solid rgba(56, 92, 96, .3); border-bottom: 2rpx solid rgba(56, 92, 96, .3); background: rgba(255, 253, 247, .8); color: var(--sc-deep-teal); font-size: 38rpx; font-weight: 700; line-height: 1.45; }
 .draw-stage { position: relative; display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 100%; min-height: 490rpx; margin: 0 auto; }
