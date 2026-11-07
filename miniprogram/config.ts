@@ -1,6 +1,9 @@
 export const ZOOM_MS = 300
 export const BURST_MS = 400
 export const ENVELOPE_ANIM_MS = 900
+export const MEDIA_LOAD_TIMEOUT_MS = 8000
+export const MEDIA_SLOW_HINT_MS = 2500
+export const MEDIA_PLAY_FALLBACK_MS = 450
 export const NAME_REVIEW_WAIT_MS = 800
 export const AUTO_OPEN_AFTER_DRAW = true
 export const VIBRATE_ON_DRAW = true
