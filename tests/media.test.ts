@@ -81,4 +81,17 @@ describe('CloudBase media URLs', () => {
       videoError: 'video source is empty',
     })
   })
+
+  it('still resolves a cloud poster when the video source is missing', async () => {
+    const getTempFileURL = vi.fn().mockResolvedValue({
+      fileList: [{ fileID: posterFile, status: 0, tempFileURL: 'https://cdn.example.com/poster.jpg', errMsg: 'ok' }],
+    })
+    vi.stubGlobal('wx', { cloud: { getTempFileURL } })
+
+    await expect(resolveMediaSources('', posterFile)).resolves.toEqual({
+      videoUrl: '',
+      posterUrl: 'https://cdn.example.com/poster.jpg',
+      videoError: 'video source is empty',
+    })
+  })
 })
