@@ -39,21 +39,30 @@ export async function resolveCloudUrls(urls: string[]): Promise<string[]> {
 }
 
 export async function resolveMediaSources(videoUrl: string, posterUrl: string): Promise<MediaSources> {
-  if (!videoUrl) {
-    const posterResults = await cloudFileResults([posterUrl])
-    return {
-      videoUrl: '',
-      posterUrl: resolveOneCloudUrl(posterUrl, posterResults) ?? '',
-      videoError: 'video source is empty',
+  let results: Map<string, CloudFileResult>
+  try {
+    results = await cloudFileResults([videoUrl, posterUrl])
+  } catch (error) {
+    const posterFallback = posterUrl.startsWith('https://') ? posterUrl : ''
+    const message = error instanceof Error ? error.message : String(error)
+    if (videoUrl.startsWith('cloud://') || !videoUrl) {
+      return {
+        videoUrl: '',
+        posterUrl: posterFallback,
+        videoError: !videoUrl ? 'video source is empty' : `CloudBase video URL request failed: ${message}`,
+      }
     }
+    // The video already has a direct URL; a failed optional poster lookup must not block it.
+    return { videoUrl, posterUrl: posterFallback }
   }
 
-  const results = await cloudFileResults([videoUrl, posterUrl])
   const resolvedVideo = resolveOneCloudUrl(videoUrl, results)
   const resolvedPoster = resolveOneCloudUrl(posterUrl, results)
-  const videoError = resolvedVideo === null
-    ? `CloudBase video URL unavailable: ${results.get(videoUrl)?.errMsg ?? 'missing file'}`
-    : undefined
+  const videoError = !videoUrl
+    ? 'video source is empty'
+    : resolvedVideo === null
+      ? `CloudBase video URL unavailable: ${results.get(videoUrl)?.errMsg ?? 'missing file'}`
+      : undefined
 
   // A poster is decorative fallback content. Its failure must never block video playback.
   if (posterUrl.startsWith('cloud://') && resolvedPoster === null) {
@@ -61,7 +70,7 @@ export async function resolveMediaSources(videoUrl: string, posterUrl: string): 
   }
 
   return {
-    videoUrl: resolvedVideo ?? '',
+    videoUrl: videoError === undefined ? resolvedVideo ?? '' : '',
     posterUrl: resolvedPoster ?? '',
     ...(videoError === undefined ? {} : { videoError }),
   }
