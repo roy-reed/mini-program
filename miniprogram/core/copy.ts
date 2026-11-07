@@ -69,6 +69,7 @@ export const COPY = {
     memoryLabel: '写给小时候的自己',
     loading: '正在拆开这封童年的来信…',
     loadingHint: '先看看这张来自旧时光的明信片',
+    tapPlay: '点这里播放邀请函',
     loadSlow: '画面还在路上，网络可能有点慢',
     buffering: '画面正在缓冲…',
     loadFail: '这封来信暂时没有打开',
