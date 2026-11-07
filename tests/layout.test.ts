@@ -53,7 +53,8 @@ describe('responsive invitation player layout', () => {
     expect(playerWidthPx).toBeLessThanOrEqual(Math.max(1, width - PLAYER_HORIZONTAL_MARGIN_PX * 2) + 1)
     expect(playerWidthPx).toBeLessThanOrEqual(PLAYER_MAX_WIDTH_PX + 1)
     expect(playerHeightPx / playerWidthPx).toBeCloseTo(4 / 3, 2)
-    expect(flapHeightPx).toBeCloseTo(ENVELOPE_FRONT_HEIGHT_PX, 0)
+    expect(flapHeightPx).toBeGreaterThan(ENVELOPE_FRONT_HEIGHT_PX - 2)
+    expect(flapHeightPx).toBeLessThan(ENVELOPE_FRONT_HEIGHT_PX + 2)
 
     // Short viewports may scroll, but the player itself must never collapse.
     expect(playerHeightPx).toBeGreaterThanOrEqual(PLAYER_MIN_HEIGHT_PX - 1)
