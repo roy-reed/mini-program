@@ -156,7 +156,6 @@ export function parseLibrary(input: unknown): LibraryResult {
   for (const item of [...videos, ...audios]) if (!(item.weight > 0) || !Number.isFinite(item.weight)) problems.push(`${item.id} weight must be greater than 0`)
   const allowUnequalWeights = input.allowUnequalWeights === true
   if (!allowUnequalWeights) { equalEnabledWeights(videos, 'video', problems); equalEnabledWeights(audios, 'audio', problems) }
-  if (videos.some((item) => item.aiGenerated) && aiLabel === null) problems.push('overlays.aiLabel is required when a video is AI generated')
 
   const wordsPath = fileURLToPath(new URL('../forbidden-words.txt', import.meta.url))
   try {

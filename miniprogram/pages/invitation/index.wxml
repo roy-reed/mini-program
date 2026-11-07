@@ -15,9 +15,7 @@
           <cover-view class="media-cover-title">{{status === 'error' ? copy.inv.loadFail : copy.inv.loading}}</cover-view>
           <cover-view wx:if="{{status === 'loading'}}" class="media-cover-caption">{{slowLoading ? copy.inv.loadSlow : copy.inv.loadingHint}}</cover-view>
           <cover-view wx:if="{{status === 'loading' && slowLoading && videoUrl}}" class="media-cover-action" bindtap="onTapPlay">{{copy.inv.tapPlay}}</cover-view>
-          <cover-view wx:if="{{status === 'error'}}" class="media-cover-caption">{{copy.inv.loadFailTip}}</cover-view>
           <cover-view wx:if="{{status === 'error'}}" class="media-cover-action" bindtap="onRetry">{{copy.inv.retry}}</cover-view>
-          <cover-view wx:if="{{status === 'error'}}" class="media-cover-other" bindtap="onChangeInvitation">{{copy.select.change}}</cover-view>
         </cover-view>
       </cover-view>
       <cover-view wx:if="{{status === 'buffering'}}" class="media-buffer-note">{{copy.inv.buffering}}</cover-view>
@@ -25,8 +23,6 @@
   </envelope>
   <view wx:if="{{aiNotice}}" class="ai">{{copy.inv.aiNotice}}</view>
   <view class="links">
-    <text class="link" bindtap="onChangeInvitation">{{copy.select.change}}</text>
-    <text class="sep">·</text>
     <text class="link" bindtap="onChangeName">{{copy.inv.changeName}}</text>
     <text class="sep">·</text>
     <text class="link" bindtap="onLegal">{{copy.inv.legal}}</text>

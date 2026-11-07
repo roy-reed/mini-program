@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="750" height="1100" viewBox="0 0 750 1100">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c6dde0"/>
+      <stop offset=".51" stop-color="#e3eacb"/>
+      <stop offset="1" stop-color="#f5eed8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#f8d993" stop-opacity=".83"/>
+      <stop offset="1" stop-color="#f8d993" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="750" height="1100" fill="url(#sky)"/>
+  <circle cx="545" cy="235" r="208" fill="url(#glow)"/>
+  <circle cx="545" cy="235" r="69" fill="#f5d893" opacity=".85"/>
+  <g fill="#fff7e4" opacity=".44">
+    <ellipse cx="142" cy="224" rx="110" ry="24"/>
+    <ellipse cx="202" cy="214" rx="73" ry="28"/>
+    <ellipse cx="630" cy="119" rx="108" ry="24"/>
+    <ellipse cx="56" cy="414" rx="83" ry="17"/>
+  </g>
+  <g stroke="#73989a" stroke-width="7" fill="none" opacity=".58">
+    <circle cx="554" cy="553" r="156"/>
+    <circle cx="554" cy="553" r="34"/>
+    <path d="M554 397V709 M398 553H710 M444 443L664 663 M444 663L664 443"/>
+    <path d="M554 553L477 865 M554 553L625 865 M462 865H638"/>
+  </g>
+  <g fill="#e3bfb0" stroke="#73989a" stroke-width="4" opacity=".73">
+    <rect x="534" y="388" width="40" height="33" rx="9"/>
+    <rect x="534" y="688" width="40" height="33" rx="9"/>
+    <rect x="383" y="537" width="40" height="33" rx="9"/>
+    <rect x="686" y="537" width="40" height="33" rx="9"/>
+    <rect x="428" y="430" width="40" height="33" rx="9"/>
+    <rect x="641" y="642" width="40" height="33" rx="9"/>
+    <rect x="428" y="641" width="40" height="33" rx="9"/>
+    <rect x="641" y="430" width="40" height="33" rx="9"/>
+  </g>
+  <path d="M0 811Q143 722 321 817Q470 729 750 798V1100H0Z" fill="#afc6ab" opacity=".57"/>
+  <path d="M0 876Q148 806 285 867Q450 813 750 873V1100H0Z" fill="#87ac9e" opacity=".41"/>
+  <path d="M0 986Q172 909 359 984Q520 922 750 963V1100H0Z" fill="#cfb99d" opacity=".3"/>
+  <g opacity=".56" fill="none" stroke="#a46e5e" stroke-width="5">
+    <path d="M90 936V848 M220 936V848 M155 807V936"/>
+    <path d="M73 848Q155 805 237 848"/>
+  </g>
+  <g fill="#e6cfa2" opacity=".7">
+    <path d="M50 848L155 786L260 848Z"/>
+    <path d="M115 799L155 786L196 799L155 867Z" fill="#d99b82" opacity=".69"/>
+  </g>
+  <g fill="#fff7e7" opacity=".42">
+    <circle cx="95" cy="495" r="3"/>
+    <circle cx="210" cy="672" r="4"/>
+    <circle cx="288" cy="350" r="3"/>
+    <circle cx="688" cy="246" r="4"/>
+    <circle cx="35" cy="728" r="3"/>
+  </g>
+</svg>

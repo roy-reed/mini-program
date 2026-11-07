@@ -37,20 +37,3 @@ export function drawInvitation(manifest: Manifest, rng: Rng, now: number): DrawR
   return { videoId: video.id, audioId: audio.id, comboKey, drawnAt: now, manifestVersion: manifest.version }
 }
 
-export function selectInvitation(manifest: Manifest, videoId: string, audioId: string, now: number): DrawResult {
-  if (!manifest.videos.some((item) => item.id === videoId)) throw new Error(`unknown background: ${videoId}`)
-  if (!manifest.audios.some((item) => item.id === audioId)) throw new Error(`unknown music: ${audioId}`)
-  const comboKey = comboKeyOf(videoId, audioId)
-  if (manifest.combos[comboKey] === undefined) throw new Error(`combo is missing from manifest: ${comboKey}`)
-  return { videoId, audioId, comboKey, drawnAt: now, manifestVersion: manifest.version }
-}
-
-export function redrawInvitation(manifest: Manifest, rng: Rng, now: number, previousKey: string | null): DrawResult {
-  const choices = manifest.videos.flatMap((video) => manifest.audios
-    .filter((audio) => manifest.combos[comboKeyOf(video.id, audio.id)] !== undefined)
-    .map((audio) => ({ videoId: video.id, audioId: audio.id, key: comboKeyOf(video.id, audio.id), weight: video.weight * audio.weight })))
-  if (choices.length === 0) throw new Error('no valid invitation combinations')
-  const different = choices.filter((choice) => choice.key !== previousKey)
-  const selected = pickWeighted(different.length > 0 ? different : choices, rng)
-  return selectInvitation(manifest, selected.videoId, selected.audioId, now)
-}
