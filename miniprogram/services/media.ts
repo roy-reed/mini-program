@@ -20,7 +20,7 @@ async function cloudFileResults(urls: string[]): Promise<Map<string, CloudFileRe
 }
 
 function resolveOneCloudUrl(url: string, results: Map<string, CloudFileResult>): string | null {
-  if (!url.startsWith('cloud://')) return url || null
+  if (!url.startsWith('cloud://')) return url
   const item = results.get(url)
   if (item?.status !== 0 || !item.tempFileURL?.startsWith('https://')) return null
   return item.tempFileURL
