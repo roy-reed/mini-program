@@ -71,7 +71,19 @@ describe('CloudBase media URLs', () => {
     expect(invalid.videoError).toContain('CloudBase video URL unavailable')
 
     getTempFileURL.mockRejectedValue(new Error('network error'))
-    await expect(resolveMediaSources(videoFile, posterFile)).rejects.toThrow('network error')
+    const failed = await resolveMediaSources(videoFile, posterFile)
+    expect(failed.videoUrl).toBe('')
+    expect(failed.videoError).toContain('network error')
+  })
+
+  it('does not block a direct HTTPS video when only the optional poster lookup fails', async () => {
+    const getTempFileURL = vi.fn().mockRejectedValue(new Error('poster lookup failed'))
+    vi.stubGlobal('wx', { cloud: { getTempFileURL } })
+
+    await expect(resolveMediaSources('https://cdn.example.com/video.mp4', posterFile)).resolves.toEqual({
+      videoUrl: 'https://cdn.example.com/video.mp4',
+      posterUrl: '',
+    })
   })
 
   it('shows an HTTPS poster even when the video source is missing', async () => {
