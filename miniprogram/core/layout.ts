@@ -1,5 +1,5 @@
 export const PLAYER_MAX_WIDTH_PX = 480
-export const PLAYER_MIN_HEIGHT_PX = 240
+export const PLAYER_MIN_HEIGHT_PX = 300
 export const PLAYER_RESERVED_HEIGHT_PX = 220
 export const PLAYER_HORIZONTAL_MARGIN_PX = 16
 export const ENVELOPE_FRONT_HEIGHT_PX = 72
