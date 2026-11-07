@@ -1,4 +1,4 @@
-import { ENVELOPE_ANIM_MS, SHARE_IMAGE } from '../../config'
+import { ENVELOPE_ANIM_MS, MEDIA_LOAD_TIMEOUT_MS, MEDIA_PLAY_FALLBACK_MS, MEDIA_SLOW_HINT_MS, SHARE_IMAGE } from '../../config'
 import { COPY, t } from '../../core/copy'
 import { fitFontRpx, buildInviteText } from '../../core/fit'
 import { layoutFor } from '../../core/layout'
@@ -9,13 +9,14 @@ import { loadInvitation, loadProfile } from '../../services/store'
 import { resolveMediaSources } from '../../services/media'
 
 type EnvelopeState = 'closed' | 'opening' | 'open' | 'closing'
-type PlayerStatus = 'idle' | 'loading' | 'playing' | 'error'
+type PlayerStatus = 'idle' | 'loading' | 'buffering' | 'playing' | 'error'
 type InvitationData = {
   copy: typeof COPY
   ready: boolean
   env: EnvelopeState
   status: PlayerStatus
   showVideo: boolean
+  slowLoading: boolean
   videoUrl: string
   posterUrl: string
   toText: string
@@ -41,6 +42,7 @@ Page({
     env: 'closed',
     status: 'idle',
     showVideo: false,
+    slowLoading: false,
     videoUrl: '',
     posterUrl: '',
     toText: '',
@@ -65,11 +67,13 @@ Page({
   closeTimer: null as ReturnType<typeof setTimeout> | null,
   playTimer: null as ReturnType<typeof setTimeout> | null,
   loadTimer: null as ReturnType<typeof setTimeout> | null,
+  hintTimer: null as ReturnType<typeof setTimeout> | null,
   sourceVideoUrl: '',
   sourcePosterUrl: '',
   mediaRequestId: 0,
   mediaError: false,
   playRequested: false,
+  hasStarted: false,
   disposed: false,
   visible: true,
 
@@ -123,6 +127,7 @@ Page({
     try {
       const sources = await resolveMediaSources(this.sourceVideoUrl, this.sourcePosterUrl)
       if (this.disposed || requestId !== this.mediaRequestId) return
+      if (this.data.status === 'error' && this.data.env === 'open') return
       this.mediaError = false
       this.setData({ videoUrl: sources.videoUrl, posterUrl: sources.posterUrl }, () => {
         this.schedulePlay()
@@ -139,34 +144,57 @@ Page({
   clearPlayerTimers() {
     if (this.playTimer !== null) clearTimeout(this.playTimer)
     if (this.loadTimer !== null) clearTimeout(this.loadTimer)
+    if (this.hintTimer !== null) clearTimeout(this.hintTimer)
     this.playTimer = null
     this.loadTimer = null
+    this.hintTimer = null
+  },
+
+  startSlowHint() {
+    if (this.hintTimer !== null || !this.visible || this.data.status !== 'loading') return
+    this.hintTimer = setTimeout(() => {
+      this.hintTimer = null
+      if (this.visible && this.data.env === 'open' && this.data.status === 'loading') {
+        this.setData({ slowLoading: true })
+      }
+    }, MEDIA_SLOW_HINT_MS)
+  },
+
+  showLoadError(reason: string) {
+    if (this.data.env !== 'open' || this.data.status === 'error') return
+    console.error('invitation media playback failed', reason)
+    this.mediaRequestId += 1
+    this.mediaError = true
+    this.playRequested = false
+    this.clearPlayerTimers()
+    if (this.videoCtx !== null) this.videoCtx.stop()
+    this.videoCtx = null
+    this.setData({ showVideo: false, status: 'error', slowLoading: false })
   },
 
   startLoadTimer() {
     if (this.loadTimer !== null || !this.visible) return
     this.loadTimer = setTimeout(() => {
       this.loadTimer = null
-      if (this.data.env === 'open' && this.data.status === 'loading' && this.visible) {
-        console.error('invitation video loading timed out')
-        this.setData({ status: 'error' })
+      if (this.visible && this.data.env === 'open' && (this.data.status === 'loading' || this.data.status === 'buffering')) {
+        this.showLoadError('loading timed out')
       }
-    }, 12000)
+    }, MEDIA_LOAD_TIMEOUT_MS)
   },
 
-  requestPlay() {
-    if (this.playRequested || !this.visible || this.data.env !== 'open' || !this.data.showVideo || !this.data.videoUrl || this.mediaError) return
+  requestPlay(force = false) {
+    if ((this.playRequested && !force) || !this.visible || this.data.env !== 'open' || !this.data.showVideo || !this.data.videoUrl || this.mediaError || this.data.status === 'error') return
     if (this.playTimer !== null) clearTimeout(this.playTimer)
     this.playTimer = null
     this.playRequested = true
-    this.videoCtx = wx.createVideoContext('player', this)
+    if (this.videoCtx === null) this.videoCtx = wx.createVideoContext('player', this)
     this.videoCtx.play()
   },
 
   schedulePlay() {
-    if (this.playRequested || !this.visible || this.data.env !== 'open' || !this.data.showVideo || !this.data.videoUrl || this.mediaError) return
+    if (this.playRequested || !this.visible || this.data.env !== 'open' || !this.data.showVideo || !this.data.videoUrl || this.mediaError || this.data.status === 'error') return
     if (this.playTimer !== null) clearTimeout(this.playTimer)
-    this.playTimer = setTimeout(() => this.requestPlay(), 800)
+    this.playTimer = setTimeout(() => this.requestPlay(), MEDIA_PLAY_FALLBACK_MS)
   },
 
   open() {
@@ -174,9 +202,11 @@ Page({
     this.setData({ env: 'opening' })
     this.openTimer = setTimeout(() => {
       this.playRequested = false
-      this.setData({ env: 'open', showVideo: true, status: this.mediaError ? 'error' : 'loading', nameOpacity: 0 }, () => {
+      this.hasStarted = false
+      this.setData({ env: 'open', showVideo: true, status: this.mediaError ? 'error' : 'loading', slowLoading: false, nameOpacity: 0 }, () => {
         if (!this.mediaError) {
           this.startLoadTimer()
+          this.startSlowHint()
           this.schedulePlay()
         }
       })
@@ -186,9 +216,11 @@ Page({
   close() {
     this.clearPlayerTimers()
     this.playRequested = false
+    this.hasStarted = false
     this.wasPlaying = false
     if (this.videoCtx !== null) this.videoCtx.stop()
-    this.setData({ showVideo: false, status: 'idle', nameOpacity: 0, env: 'closing' })
+    this.videoCtx = null
+    this.setData({ showVideo: false, status: 'idle', slowLoading: false, nameOpacity: 0, env: 'closing' })
     this.closeTimer = setTimeout(() => this.setData({ env: 'closed' }), ENVELOPE_ANIM_MS)
   },
 
@@ -198,37 +230,38 @@ Page({
   },
 
   onVideoLoaded() {
-    this.requestPlay()
+    if (this.data.status === 'loading' && !this.mediaError) this.requestPlay(true)
   },
 
   onVideoPlay() {
-    if (this.data.env !== 'open') return
-    if (this.loadTimer !== null) clearTimeout(this.loadTimer)
-    this.loadTimer = null
+    if (this.data.env !== 'open' || this.mediaError || this.data.status === 'error') return
+    this.clearPlayerTimers()
+    this.hasStarted = true
     this.wasPlaying = true
-    this.setData({ status: 'playing' })
+    this.setData({ status: 'playing', slowLoading: false })
   },
 
   onVideoWaiting() {
-    if (this.data.env !== 'open' || !this.visible) return
-    this.setData({ status: 'loading' })
+    if (this.data.env !== 'open' || !this.visible || this.mediaError || this.data.status === 'error') return
+    const status = this.hasStarted ? 'buffering' : 'loading'
+    this.setData({ status })
     this.startLoadTimer()
+    if (status === 'loading') this.startSlowHint()
   },
 
   onVideoError(event: WechatMiniprogram.VideoError) {
-    console.error('invitation video error', event.detail)
-    this.clearPlayerTimers()
-    this.setData({ status: 'error' })
+    if (this.data.env !== 'open' || !this.data.showVideo) return
+    this.showLoadError(JSON.stringify(event.detail))
   },
 
   onTimeUpdate(event: WechatMiniprogram.VideoTimeUpdate) {
-    if (this.timeline === null || this.data.env !== 'open') return
-    if (this.loadTimer !== null) clearTimeout(this.loadTimer)
-    this.loadTimer = null
+    if (this.timeline === null || this.data.env !== 'open' || this.mediaError || this.data.status === 'error') return
+    this.clearPlayerTimers()
+    this.hasStarted = true
     const state = stateAt(this.timeline, event.detail.currentTime * 1000)
     const opacity = Math.round(state.opacity * 50) / 50
     if (Math.abs(opacity - this.data.nameOpacity) >= 0.02 || this.data.status !== 'playing') {
-      this.setData({ status: 'playing', nameOpacity: opacity })
+      this.setData({ status: 'playing', slowLoading: false, nameOpacity: opacity })
     }
   },
 
@@ -237,11 +270,14 @@ Page({
     this.mediaRequestId += 1
     this.clearPlayerTimers()
     this.playRequested = false
+    this.hasStarted = false
     this.mediaError = false
     if (this.videoCtx !== null) this.videoCtx.stop()
-    this.setData({ showVideo: false, videoUrl: '', posterUrl: '', status: 'loading', nameOpacity: 0 }, () => {
+    this.videoCtx = null
+    this.setData({ showVideo: false, videoUrl: '', status: 'loading', slowLoading: false, nameOpacity: 0 }, () => {
       this.setData({ showVideo: true }, () => {
         this.startLoadTimer()
+        this.startSlowHint()
         void this.prepareMedia()
       })
     })
@@ -263,12 +299,17 @@ Page({
     this.visible = true
     if (!this.data.ready) return
     this.refreshName()
-    if (this.data.env === 'open' && (this.wasPlaying || this.playRequested) && this.videoCtx !== null) {
-      this.videoCtx.play()
-      if (this.data.status === 'loading') this.startLoadTimer()
-    } else if (this.data.env === 'open' && this.data.status === 'loading') {
-      this.startLoadTimer()
-      this.schedulePlay()
+    if (this.data.env === 'open' && this.data.status !== 'error') {
+      if (this.wasPlaying && this.videoCtx !== null) {
+        this.videoCtx.play()
+      } else {
+        this.playRequested = false
+        this.schedulePlay()
+      }
+      if (this.data.status === 'loading' || this.data.status === 'buffering') {
+        this.startLoadTimer()
+        this.startSlowHint()
+      }
     }
   },
 
