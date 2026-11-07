@@ -3,23 +3,40 @@
     <text class="album">{{albumTitle}}</text>
     <text class="release">{{releaseText}}</text>
   </view>
-  <envelope state="{{env}}" to-text="{{toText}}" open-hint="{{copy.inv.tapToOpen}}" close-hint="{{copy.inv.tapToClose}}" poster-url="{{posterUrl}}" width-rpx="{{playerWidthRpx}}" height-rpx="{{playerHeightRpx}}" duration-ms="{{envelopeMs}}" bind:toggle="onToggleEnvelope">
+  <envelope state="{{env}}" to-text="{{toText}}" open-hint="{{copy.inv.tapToOpen}}" close-hint="{{copy.inv.tapToClose}}" poster-url="{{posterUrl}}" width-rpx="{{playerWidthRpx}}" height-rpx="{{playerHeightRpx}}" front-height-rpx="{{envelopeFrontHeightRpx}}" duration-ms="{{envelopeMs}}" bind:toggle="onToggleEnvelope">
     <view class="player" style="width:{{playerWidthRpx}}rpx;height:{{playerHeightRpx}}rpx">
       <video wx:if="{{showVideo && videoUrl}}" id="player" class="video" src="{{videoUrl}}" poster="{{posterUrl}}" loop controls="{{false}}" show-center-play-btn="{{false}}" show-play-btn="{{false}}" show-fullscreen-btn="{{false}}" show-progress="{{false}}" enable-progress-gesture="{{false}}" object-fit="cover" bindloadedmetadata="onVideoLoaded" bindplay="onVideoPlay" bindwaiting="onVideoWaiting" binderror="onVideoError" bindtimeupdate="onTimeUpdate"></video>
       <view class="name" style="top:{{nameTopPct * 100}}%;color:{{nameColor}};font-size:{{nameFontRpx}}rpx;opacity:{{nameOpacity}}">{{inviteText}}</view>
-      <cover-view wx:if="{{status === 'loading' || status === 'error'}}" class="media-cover">
+      <cover-view wx:if="{{showVideo && videoUrl && (status === 'loading' || status === 'error')}}" class="media-cover">
         <cover-image wx:if="{{posterUrl}}" class="media-cover-photo" src="{{posterUrl}}"></cover-image>
         <cover-view class="media-cover-wash"></cover-view>
         <cover-view class="media-cover-card">
           <cover-view class="media-cover-tag">{{copy.inv.memoryLabel}}</cover-view>
-          <cover-view class="media-cover-title">{{status === 'error' ? copy.inv.loadFail : copy.inv.loading}}</cover-view>
+          <cover-view class="media-cover-title">{{fallbackMode ? copy.inv.unavailable : (status === 'error' ? copy.inv.loadFail : copy.inv.loading)}}</cover-view>
           <cover-view wx:if="{{status === 'loading'}}" class="media-cover-caption">{{slowLoading ? copy.inv.loadSlow : copy.inv.loadingHint}}</cover-view>
-          <cover-view wx:if="{{status === 'loading' && slowLoading && videoUrl}}" class="media-cover-action" bindtap="onTapPlay">{{copy.inv.tapPlay}}</cover-view>
-          <cover-view wx:if="{{status === 'error'}}" class="media-cover-caption">{{copy.inv.loadFailTip}}</cover-view>
-          <cover-view wx:if="{{status === 'error'}}" class="media-cover-action" bindtap="onRetry">{{copy.inv.retry}}</cover-view>
-          <cover-view wx:if="{{status === 'error'}}" class="media-cover-other" bindtap="onChangeInvitation">{{copy.select.change}}</cover-view>
+          <cover-view wx:if="{{status === 'loading' && slowLoading}}" class="media-cover-action" bindtap="onTapPlay">{{copy.inv.tapPlay}}</cover-view>
+          <cover-view wx:if="{{status === 'error' && fallbackMode}}" class="media-cover-caption">{{copy.inv.unavailableTip}}</cover-view>
+          <cover-view wx:if="{{status === 'error' && fallbackMode}}" class="media-cover-action" bindtap="onBackToDraw">{{copy.inv.createNew}}</cover-view>
+          <cover-view wx:if="{{status === 'error' && !fallbackMode}}" class="media-cover-caption">{{copy.inv.loadFailTip}}</cover-view>
+          <cover-view wx:if="{{status === 'error' && !fallbackMode}}" class="media-cover-action" bindtap="onRetry">{{copy.inv.retry}}</cover-view>
+          <cover-view wx:if="{{status === 'error' && !fallbackMode}}" class="media-cover-other" bindtap="onChangeInvitation">{{copy.select.change}}</cover-view>
         </cover-view>
       </cover-view>
+      <view wx:elif="{{status === 'loading' || status === 'error'}}" class="media-cover">
+        <image wx:if="{{posterUrl}}" class="media-cover-photo" src="{{posterUrl}}" mode="aspectFill"></image>
+        <view class="media-cover-wash"></view>
+        <view class="media-cover-card">
+          <view class="media-cover-tag">{{copy.inv.memoryLabel}}</view>
+          <view class="media-cover-title">{{fallbackMode ? copy.inv.unavailable : (status === 'error' ? copy.inv.loadFail : copy.inv.loading)}}</view>
+          <view wx:if="{{status === 'loading'}}" class="media-cover-caption">{{slowLoading ? copy.inv.loadSlow : copy.inv.loadingHint}}</view>
+          <view wx:if="{{status === 'loading' && slowLoading && videoUrl}}" class="media-cover-action" bindtap="onTapPlay">{{copy.inv.tapPlay}}</view>
+          <view wx:if="{{status === 'error' && fallbackMode}}" class="media-cover-caption">{{copy.inv.unavailableTip}}</view>
+          <view wx:if="{{status === 'error' && fallbackMode}}" class="media-cover-action" bindtap="onBackToDraw">{{copy.inv.createNew}}</view>
+          <view wx:if="{{status === 'error' && !fallbackMode}}" class="media-cover-caption">{{copy.inv.loadFailTip}}</view>
+          <view wx:if="{{status === 'error' && !fallbackMode}}" class="media-cover-action" bindtap="onRetry">{{copy.inv.retry}}</view>
+          <view wx:if="{{status === 'error' && !fallbackMode}}" class="media-cover-other" bindtap="onChangeInvitation">{{copy.select.change}}</view>
+        </view>
+      </view>
       <cover-view wx:if="{{status === 'buffering'}}" class="media-buffer-note">{{copy.inv.buffering}}</cover-view>
     </view>
   </envelope>

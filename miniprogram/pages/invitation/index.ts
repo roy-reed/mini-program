@@ -13,6 +13,7 @@ type PlayerStatus = 'idle' | 'loading' | 'buffering' | 'playing' | 'error'
 type InvitationData = {
   copy: typeof COPY
   ready: boolean
+  fallbackMode: boolean
   env: EnvelopeState
   status: PlayerStatus
   showVideo: boolean
@@ -27,6 +28,7 @@ type InvitationData = {
   nameOpacity: number
   playerWidthRpx: number
   playerHeightRpx: number
+  envelopeFrontHeightRpx: number
   showHeader: boolean
   albumTitle: string
   releaseText: string
@@ -39,6 +41,7 @@ Page({
   data: {
     copy: COPY,
     ready: false,
+    fallbackMode: false,
     env: 'closed',
     status: 'idle',
     showVideo: false,
@@ -53,6 +56,7 @@ Page({
     nameOpacity: 0,
     playerWidthRpx: 600,
     playerHeightRpx: 800,
+    envelopeFrontHeightRpx: 144,
     showHeader: true,
     albumTitle: '',
     releaseText: '',
@@ -63,6 +67,7 @@ Page({
   timeline: null as Timeline | null,
   videoCtx: null as WechatMiniprogram.VideoContext | null,
   wasPlaying: false,
+  firstFrameReady: false,
   openTimer: null as ReturnType<typeof setTimeout> | null,
   closeTimer: null as ReturnType<typeof setTimeout> | null,
   playTimer: null as ReturnType<typeof setTimeout> | null,
@@ -73,45 +78,113 @@ Page({
   mediaRequestId: 0,
   mediaError: false,
   playRequested: false,
-  hasStarted: false,
   disposed: false,
   visible: true,
 
-  async onLoad(query: PageQuery) {
-    const decision = await currentEntry()
-    if (decision.entry !== 'invitation') { goEntry(decision); return }
-    const stored = loadInvitation()
-    const combo = stored === null ? undefined : MANIFEST.combos[stored.comboKey]
-    const video = combo === undefined ? undefined : MANIFEST.videos.find((item) => item.id === combo.videoId)
-    if (stored === null || combo === undefined || video === undefined) {
-      goEntry({ entry: 'draw', redraw: true })
-      return
+  getResponsiveLayout() {
+    try {
+      const info = wx.getWindowInfo()
+      return layoutFor(info.windowWidth, info.windowHeight)
+    } catch (windowInfoError) {
+      try {
+        const info = wx.getSystemInfoSync()
+        return layoutFor(info.windowWidth, info.windowHeight)
+      } catch (systemInfoError) {
+        console.warn('window metrics unavailable; using the safe default viewport', windowInfoError, systemInfoError)
+        return layoutFor(375, 667)
+      }
     }
-    const windowInfo = wx.getWindowInfo()
-    const playerLayout = layoutFor(windowInfo.windowWidth, windowInfo.windowHeight)
-    this.timeline = buildTimeline({ audioMs: combo.playMs, loopMs: combo.loopMs })
-    this.sourceVideoUrl = combo.url
-    this.sourcePosterUrl = combo.posterUrl
+  },
+
+  showUnavailableInvitation() {
+    const playerLayout = this.getResponsiveLayout()
+    this.mediaRequestId += 1
+    this.mediaError = true
+    this.timeline = null
+    this.sourceVideoUrl = ''
+    this.sourcePosterUrl = ''
+    this.clearPlayerTimers()
     this.setData({
       ready: true,
+      fallbackMode: true,
+      env: 'open',
+      status: 'error',
+      showVideo: false,
+      slowLoading: false,
       videoUrl: '',
       posterUrl: '',
-      nameColor: video.textColor,
-      nameTopPct: MANIFEST.layout.nameTopPct,
+      toText: COPY.inv.unavailable,
+      inviteText: '',
+      nameOpacity: 0,
       playerWidthRpx: playerLayout.playerWidthRpx,
       playerHeightRpx: playerLayout.playerHeightRpx,
-      showHeader: !MANIFEST.titleBaked,
-      albumTitle: MANIFEST.album.title,
-      releaseText: t('inv.release', { date: MANIFEST.album.releaseDate }),
-      aiNotice: video.aiGenerated,
-    }, () => {
-      this.refreshName()
-      void this.prepareMedia()
-      if (query.autoOpen === '1') this.open()
+      envelopeFrontHeightRpx: playerLayout.envelopeFrontHeightRpx,
+      showHeader: false,
+      albumTitle: '',
+      releaseText: '',
+      aiNotice: false,
     })
   },
 
+  async onLoad(query: PageQuery) {
+    try {
+      const decision = await currentEntry()
+      if (decision.entry !== 'invitation') {
+        goEntry(decision)
+        return
+      }
+
+      const stored = loadInvitation()
+      const combo = stored === null ? undefined : MANIFEST.combos[stored.comboKey]
+      const video = combo === undefined ? undefined : MANIFEST.videos.find((item) => item.id === combo.videoId)
+      if (stored === null || combo === undefined || video === undefined) {
+        console.error('invitation data is missing or no longer exists in the manifest')
+        this.showUnavailableInvitation()
+        return
+      }
+
+      const playerLayout = this.getResponsiveLayout()
+      try {
+        this.timeline = buildTimeline({ audioMs: combo.playMs, loopMs: combo.loopMs })
+      } catch (error) {
+        console.error('invitation timeline is invalid', error)
+        this.showUnavailableInvitation()
+        return
+      }
+
+      this.sourceVideoUrl = combo.url
+      this.sourcePosterUrl = combo.posterUrl
+      this.setData({
+        ready: true,
+        fallbackMode: false,
+        env: 'closed',
+        status: 'idle',
+        showVideo: false,
+        slowLoading: false,
+        videoUrl: '',
+        posterUrl: '',
+        nameColor: video.textColor,
+        nameTopPct: MANIFEST.layout.nameTopPct,
+        playerWidthRpx: playerLayout.playerWidthRpx,
+        playerHeightRpx: playerLayout.playerHeightRpx,
+        envelopeFrontHeightRpx: playerLayout.envelopeFrontHeightRpx,
+        showHeader: !MANIFEST.titleBaked,
+        albumTitle: MANIFEST.album.title,
+        releaseText: t('inv.release', { date: MANIFEST.album.releaseDate }),
+        aiNotice: video.aiGenerated,
+      }, () => {
+        this.refreshName()
+        void this.prepareMedia()
+        if (query.autoOpen === '1') this.open()
+      })
+    } catch (error) {
+      console.error('invitation initialization failed', error)
+      this.showUnavailableInvitation()
+    }
+  },
+
   refreshName() {
+    if (this.data.fallbackMode) return
     const profile = loadProfile()
     const name = profile?.name ?? ''
     const inviteText = buildInviteText(MANIFEST.copy.inviteLine, name)
@@ -127,6 +200,13 @@ Page({
     try {
       const sources = await resolveMediaSources(this.sourceVideoUrl, this.sourcePosterUrl)
       if (this.disposed || requestId !== this.mediaRequestId) return
+      if (sources.videoError || !sources.videoUrl) {
+        console.error('invitation video source unavailable', sources.videoError ?? 'empty video URL')
+        this.mediaError = true
+        this.clearPlayerTimers()
+        this.setData({ videoUrl: '', posterUrl: sources.posterUrl, status: 'error', showVideo: false })
+        return
+      }
       if (this.data.status === 'error' && this.data.env === 'open') return
       this.mediaError = false
       this.setData({ videoUrl: sources.videoUrl, posterUrl: sources.posterUrl }, () => {
@@ -137,7 +217,8 @@ Page({
       console.error('invitation media resolution failed', error instanceof Error ? error.message : String(error))
       this.mediaError = true
       this.clearPlayerTimers()
-      this.setData({ status: 'error' })
+      const fallbackPoster = this.sourcePosterUrl.startsWith('https://') ? this.sourcePosterUrl : ''
+      this.setData({ videoUrl: '', posterUrl: fallbackPoster, status: 'error', showVideo: false })
     }
   },
 
@@ -177,7 +258,7 @@ Page({
     this.loadTimer = setTimeout(() => {
       this.loadTimer = null
       if (this.visible && this.data.env === 'open' && (this.data.status === 'loading' || this.data.status === 'buffering')) {
-        this.showLoadError('loading timed out')
+        this.showLoadError('loading timed out before the first decoded frame or while buffering')
       }
     }, MEDIA_LOAD_TIMEOUT_MS)
   },
@@ -202,8 +283,14 @@ Page({
     this.setData({ env: 'opening' })
     this.openTimer = setTimeout(() => {
       this.playRequested = false
-      this.hasStarted = false
-      this.setData({ env: 'open', showVideo: true, status: this.mediaError ? 'error' : 'loading', slowLoading: false, nameOpacity: 0 }, () => {
+      this.firstFrameReady = false
+      this.setData({
+        env: 'open',
+        showVideo: true,
+        status: this.mediaError ? 'error' : 'loading',
+        slowLoading: false,
+        nameOpacity: 0,
+      }, () => {
         if (!this.mediaError) {
           this.startLoadTimer()
           this.startSlowHint()
@@ -216,7 +303,7 @@ Page({
   close() {
     this.clearPlayerTimers()
     this.playRequested = false
-    this.hasStarted = false
+    this.firstFrameReady = false
     this.wasPlaying = false
     if (this.videoCtx !== null) this.videoCtx.stop()
     this.videoCtx = null
@@ -240,18 +327,15 @@ Page({
 
   onVideoPlay() {
     if (this.data.env !== 'open' || this.mediaError || this.data.status === 'error') return
-    this.clearPlayerTimers()
-    this.hasStarted = true
+    // Keep the poster cover until the first timeupdate confirms that a frame is advancing.
     this.wasPlaying = true
-    this.setData({ status: 'playing', slowLoading: false })
   },
 
   onVideoWaiting() {
     if (this.data.env !== 'open' || !this.visible || this.mediaError || this.data.status === 'error') return
-    const status = this.hasStarted ? 'buffering' : 'loading'
-    this.setData({ status })
+    this.setData({ status: this.firstFrameReady ? 'buffering' : 'loading' })
     this.startLoadTimer()
-    if (status === 'loading') this.startSlowHint()
+    if (!this.firstFrameReady) this.startSlowHint()
   },
 
   onVideoError(event: WechatMiniprogram.VideoError) {
@@ -261,8 +345,8 @@ Page({
 
   onTimeUpdate(event: WechatMiniprogram.VideoTimeUpdate) {
     if (this.timeline === null || this.data.env !== 'open' || this.mediaError || this.data.status === 'error') return
+    this.firstFrameReady = true
     this.clearPlayerTimers()
-    this.hasStarted = true
     const state = stateAt(this.timeline, event.detail.currentTime * 1000)
     const opacity = Math.round(state.opacity * 50) / 50
     if (Math.abs(opacity - this.data.nameOpacity) >= 0.02 || this.data.status !== 'playing') {
@@ -271,11 +355,15 @@ Page({
   },
 
   onRetry() {
+    if (this.data.fallbackMode) {
+      this.onBackToDraw()
+      return
+    }
     if (this.data.env !== 'open') return
     this.mediaRequestId += 1
     this.clearPlayerTimers()
     this.playRequested = false
-    this.hasStarted = false
+    this.firstFrameReady = false
     this.mediaError = true
     if (this.videoCtx !== null) this.videoCtx.stop()
     this.videoCtx = null
@@ -290,7 +378,15 @@ Page({
   },
 
   onChangeInvitation() {
+    if (this.data.fallbackMode) {
+      this.onBackToDraw()
+      return
+    }
     wx.redirectTo({ url: `${PAGES.draw}?choose=1` })
+  },
+
+  onBackToDraw() {
+    wx.redirectTo({ url: PAGES.draw })
   },
 
   onChangeName() {
@@ -299,6 +395,16 @@ Page({
 
   onLegal() {
     wx.navigateTo({ url: PAGES.legal })
+  },
+
+  onResize() {
+    if (!this.data.ready) return
+    const playerLayout = this.getResponsiveLayout()
+    this.setData({
+      playerWidthRpx: playerLayout.playerWidthRpx,
+      playerHeightRpx: playerLayout.playerHeightRpx,
+      envelopeFrontHeightRpx: playerLayout.envelopeFrontHeightRpx,
+    }, () => this.refreshName())
   },
 
   onShow() {
