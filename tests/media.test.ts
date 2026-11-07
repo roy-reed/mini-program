@@ -29,7 +29,7 @@ describe('CloudBase media URLs', () => {
     expect(getTempFileURL).toHaveBeenCalledWith({ fileList: [videoFile, posterFile] })
   })
 
-  it('rejects a missing or denied cloud file', async () => {
+  it('does not block video playback when the optional poster is missing or denied', async () => {
     const getTempFileURL = vi.fn().mockResolvedValue({
       fileList: [
         { fileID: videoFile, status: 0, tempFileURL: 'https://cdn.example.com/video.mp4', errMsg: 'ok' },
@@ -37,17 +37,48 @@ describe('CloudBase media URLs', () => {
       ],
     })
     vi.stubGlobal('wx', { cloud: { getTempFileURL } })
-    await expect(resolveMediaSources(videoFile, posterFile)).rejects.toThrow('access denied')
+
+    expect(await resolveMediaSources(videoFile, posterFile)).toEqual({
+      videoUrl: 'https://cdn.example.com/video.mp4',
+      posterUrl: '',
+    })
   })
 
-  it('rejects an invalid temporary URL and propagates API failures', async () => {
+  it('keeps a working poster visible when the required video file is unavailable', async () => {
+    const getTempFileURL = vi.fn().mockResolvedValue({
+      fileList: [
+        { fileID: videoFile, status: -1, tempFileURL: '', errMsg: 'video access denied' },
+        { fileID: posterFile, status: 0, tempFileURL: 'https://cdn.example.com/poster.jpg', errMsg: 'ok' },
+      ],
+    })
+    vi.stubGlobal('wx', { cloud: { getTempFileURL } })
+
+    expect(await resolveMediaSources(videoFile, posterFile)).toEqual({
+      videoUrl: '',
+      posterUrl: 'https://cdn.example.com/poster.jpg',
+      videoError: 'CloudBase video URL unavailable: video access denied',
+    })
+  })
+
+  it('returns a player error for an invalid video URL and propagates CloudBase API failures', async () => {
     const getTempFileURL = vi.fn().mockResolvedValue({
       fileList: [{ fileID: videoFile, status: 0, tempFileURL: '', errMsg: 'ok' }],
     })
     vi.stubGlobal('wx', { cloud: { getTempFileURL } })
-    await expect(resolveMediaSources(videoFile, 'https://example.com/poster.jpg')).rejects.toThrow('CloudBase media URL unavailable')
+
+    const invalid = await resolveMediaSources(videoFile, 'https://example.com/poster.jpg')
+    expect(invalid.videoUrl).toBe('')
+    expect(invalid.videoError).toContain('CloudBase video URL unavailable')
 
     getTempFileURL.mockRejectedValue(new Error('network error'))
     await expect(resolveMediaSources(videoFile, posterFile)).rejects.toThrow('network error')
+  })
+
+  it('shows an HTTPS poster even when the video source is missing', async () => {
+    await expect(resolveMediaSources('', 'https://example.com/poster.jpg')).resolves.toEqual({
+      videoUrl: '',
+      posterUrl: 'https://example.com/poster.jpg',
+      videoError: 'video source is empty',
+    })
   })
 })
