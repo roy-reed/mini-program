@@ -56,7 +56,7 @@ describe('responsive invitation player layout', () => {
     expect(flapHeightPx).toBeGreaterThan(ENVELOPE_FRONT_HEIGHT_PX - 2)
     expect(flapHeightPx).toBeLessThan(ENVELOPE_FRONT_HEIGHT_PX + 2)
 
-    // Short viewports may scroll, but the player itself must never collapse.
+    // Short viewports may scroll, but the player itself must never collapse below its 300px readable minimum.
     expect(playerHeightPx).toBeGreaterThanOrEqual(PLAYER_MIN_HEIGHT_PX - 1)
     if (height >= PLAYER_RESERVED_HEIGHT_PX + PLAYER_MIN_HEIGHT_PX) {
       expect(playerHeightPx).toBeLessThanOrEqual(height - PLAYER_RESERVED_HEIGHT_PX + 1)
