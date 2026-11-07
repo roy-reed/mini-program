@@ -28,7 +28,7 @@ export function layoutFor(windowWidthPx: number, windowHeightPx: number): Player
   const playerWidthPx = Math.min(PLAYER_MAX_WIDTH_PX, availableWidthPx, widthFromHeightPx)
 
   // Convert the final CSS-pixel dimensions to rpx only at the rendering boundary.
-  const playerWidthRpx = Math.max(1, Math.round(playerWidthPx * 750 / windowWidthPx))
+  const playerWidthRpx = Math.max(1, Math.floor(playerWidthPx * 750 / windowWidthPx))
   const playerHeightRpx = Math.max(1, Math.round(playerWidthRpx * 4 / 3))
   const envelopeFrontHeightRpx = Math.max(1, Math.round(ENVELOPE_FRONT_HEIGHT_PX * 750 / windowWidthPx))
 
