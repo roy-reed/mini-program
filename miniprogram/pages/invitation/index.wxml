@@ -7,15 +7,26 @@
     <view class="player" style="width:{{playerWidthRpx}}rpx;height:{{playerHeightRpx}}rpx">
       <video wx:if="{{showVideo && videoUrl}}" id="player" class="video" src="{{videoUrl}}" poster="{{posterUrl}}" loop controls="{{false}}" show-center-play-btn="{{false}}" show-play-btn="{{false}}" show-fullscreen-btn="{{false}}" show-progress="{{false}}" enable-progress-gesture="{{false}}" object-fit="cover" bindloadedmetadata="onVideoLoaded" bindplay="onVideoPlay" bindwaiting="onVideoWaiting" binderror="onVideoError" bindtimeupdate="onTimeUpdate"></video>
       <view class="name" style="top:{{nameTopPct * 100}}%;color:{{nameColor}};font-size:{{nameFontRpx}}rpx;opacity:{{nameOpacity}}">{{inviteText}}</view>
-      <view wx:if="{{status === 'loading'}}" class="state">{{copy.inv.loading}}</view>
-      <view wx:if="{{status === 'error'}}" class="state state--error">
-        <text>{{copy.inv.loadFail}}</text>
-        <button size="mini" hover-class="button-hover" catchtap="onRetry">{{copy.inv.retry}}</button>
-      </view>
+      <cover-view wx:if="{{status === 'loading' || status === 'error'}}" class="media-cover">
+        <cover-image wx:if="{{posterUrl}}" class="media-cover-photo" src="{{posterUrl}}"></cover-image>
+        <cover-view class="media-cover-wash"></cover-view>
+        <cover-view class="media-cover-card">
+          <cover-view class="media-cover-tag">{{copy.inv.memoryLabel}}</cover-view>
+          <cover-view class="media-cover-title">{{status === 'error' ? copy.inv.loadFail : copy.inv.loading}}</cover-view>
+          <cover-view wx:if="{{status === 'loading'}}" class="media-cover-caption">{{slowLoading ? copy.inv.loadSlow : copy.inv.loadingHint}}</cover-view>
+          <cover-view wx:if="{{status === 'loading' && slowLoading && videoUrl}}" class="media-cover-action" bindtap="onTapPlay">{{copy.inv.tapPlay}}</cover-view>
+          <cover-view wx:if="{{status === 'error'}}" class="media-cover-caption">{{copy.inv.loadFailTip}}</cover-view>
+          <cover-view wx:if="{{status === 'error'}}" class="media-cover-action" bindtap="onRetry">{{copy.inv.retry}}</cover-view>
+          <cover-view wx:if="{{status === 'error'}}" class="media-cover-other" bindtap="onChangeInvitation">{{copy.select.change}}</cover-view>
+        </cover-view>
+      </cover-view>
+      <cover-view wx:if="{{status === 'buffering'}}" class="media-buffer-note">{{copy.inv.buffering}}</cover-view>
     </view>
   </envelope>
   <view wx:if="{{aiNotice}}" class="ai">{{copy.inv.aiNotice}}</view>
   <view class="links">
+    <text class="link" bindtap="onChangeInvitation">{{copy.select.change}}</text>
+    <text class="sep">·</text>
     <text class="link" bindtap="onChangeName">{{copy.inv.changeName}}</text>
     <text class="sep">·</text>
     <text class="link" bindtap="onLegal">{{copy.inv.legal}}</text>

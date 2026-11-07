@@ -1,5 +1,11 @@
 page {
   --sc-bg: #FFF6E5;
+  --sc-sky: #A9CDE0;
+  --sc-mint: #A9C8AD;
+  --sc-cream: #F4DFA5;
+  --sc-peach: #E9A477;
+  --sc-paper-white: #F5F0DF;
+  --sc-deep-teal: #385C60;
   --sc-paper: #FFFDF7;
   --sc-ink: #3B2A1A;
   --sc-ink-2: #7A6552;

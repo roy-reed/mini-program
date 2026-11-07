@@ -1,6 +1,41 @@
 <view class="page draw-page">
-  <view class="draw-title">{{copy.draw.title}}</view>
-  <tv phase="{{phase}}" label="{{copy.draw.button}}" disabled="{{disabled}}" bind:draw="onDraw" />
-  <view class="link rules-link" bindtap="onRules">{{copy.draw.rules}}</view>
-  <burst active="{{phase === 'burst'}}" duration-ms="{{burstMs}}" />
+  <block wx:if="{{!choosing}}">
+    <view class="draw-title">{{copy.draw.title}}</view>
+    <tv phase="{{phase}}" label="{{copy.draw.button}}" disabled="{{disabled}}" bind:draw="onDraw" />
+    <view class="choose-entry" bindtap="onShowChoices">{{copy.select.entry}}</view>
+    <view class="link rules-link" bindtap="onRules">{{copy.draw.rules}}</view>
+    <burst active="{{phase === 'burst'}}" duration-ms="{{burstMs}}" />
+  </block>
+  <block wx:else>
+    <view class="choice-heading">
+      <view class="choice-title">{{copy.select.title}}</view>
+      <view class="choice-subtitle">{{copy.select.subtitle}}</view>
+    </view>
+    <view class="choice-section-title">{{copy.select.backgrounds}}</view>
+    <view class="background-grid">
+      <view wx:for="{{backgrounds}}" wx:key="id"
+        class="background-card {{selectedVideoId === item.id ? 'background-card--selected' : ''}}"
+        data-id="{{item.id}}" bindtap="onSelectBackground">
+        <view class="poster-wrap">
+          <image wx:if="{{item.posterUrl}}" class="poster" src="{{item.posterUrl}}" mode="aspectFill" />
+          <view wx:else class="poster-placeholder"></view>
+          <view class="selected-mark" wx:if="{{selectedVideoId === item.id}}">✓</view>
+        </view>
+        <view class="background-label">{{item.label}}</view>
+      </view>
+    </view>
+    <view wx:if="{{posterError}}" class="poster-tip">{{copy.select.posterError}}</view>
+    <view class="choice-section-title music-title">{{copy.select.audios}}</view>
+    <view class="track-grid">
+      <view wx:for="{{tracks}}" wx:key="id"
+        class="track-card {{selectedAudioId === item.id ? 'track-card--selected' : ''}}"
+        data-id="{{item.id}}" bindtap="onSelectTrack">
+        <text class="track-dot"></text>
+        <text>{{item.label}}</text>
+      </view>
+    </view>
+    <button class="choice-confirm" disabled="{{disabled}}" bindtap="onConfirmChoice">{{copy.select.confirm}}</button>
+    <button class="choice-random" disabled="{{disabled}}" bindtap="onDraw">{{copy.select.random}}</button>
+    <view class="choice-back" bindtap="onCancelChoice">{{changingExisting ? copy.select.back : copy.select.backToDraw}}</view>
+  </block>
 </view>
